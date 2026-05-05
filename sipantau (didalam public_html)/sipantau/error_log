@@ -1,0 +1,4 @@
+[21-Jan-2026 14:38:40 Asia/Jakarta] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/riauwebb/sipantau/app/Models/UserModel.php on line 35
+[21-Jan-2026 14:43:34 Asia/Jakarta] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/riauwebb/sipantau/app/Models/UserModel.php on line 35
+[01-Feb-2026 14:12:22 Asia/Jakarta] PHP Fatal error:  Maximum execution time of 30 seconds exceeded in /home/riauwebb/sipantau/vendor/codeigniter4/framework/system/Database/MySQLi/Connection.php on line 370
+[03-Feb-2026 11:41:08 Asia/Jakarta] PHP Fatal error:  Cannot redeclare App\Controllers\AdminProv\DashboardController::getRealisasiDataForChart() in /home/riauwebb/sipantau/app/Controllers/AdminProv/DashboardController.php on line 851
