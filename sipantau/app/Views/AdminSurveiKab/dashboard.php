@@ -33,14 +33,14 @@
 <!-- Sub-SLS Assignment Monitoring -->
 <div class="mb-8">
     <h2 class="text-lg font-semibold text-gray-900 mb-4">Monitoring Assignment Sub SLS</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Total Card -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Target Assignment</p>
-                    <h3 class="text-3xl font-bold text-gray-900"><?= number_format($stats['assignment_total'], 0, ',', '.') ?></h3>
-                    <p class="text-[10px] text-gray-400 mt-1">* <?= $stats['sub_sls_total'] ?> Sub-SLS x <?= $stats['total_kegiatan'] ?> Kegiatan</p>
+                    <p class="text-sm text-gray-600 mb-1">Kegiatan Ter-assignment</p>
+                    <h3 class="text-3xl font-bold text-gray-900"><?= $stats['kegiatan_has_assignment'] ?> <span class="text-lg font-medium text-gray-500">/ <?= $stats['total_kegiatan'] ?></span></h3>
+                    <p class="text-[10px] text-gray-400 mt-1">* <?= $stats['kegiatan_has_assignment'] ?> dari <?= $stats['total_kegiatan'] ?> kegiatan sudah ada assign Sub-SLS</p>
                 </div>
                 <div class="w-14 h-14 bg-blue-50 rounded-lg flex items-center justify-center">
                     <i class="fas fa-map-marked text-2xl text-blue-600"></i>
@@ -53,27 +53,12 @@
             class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:border-green-400 transition-all group">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-600 mb-1 group-hover:text-green-600 transition-colors">Sudah di-Assign</p>
+                    <p class="text-sm text-gray-600 mb-1 group-hover:text-green-600 transition-colors">Jumlah Assignment</p>
                     <h3 class="text-3xl font-bold text-gray-900"><?= number_format($stats['assignment_done'], 0, ',', '.') ?></h3>
                     <p class="text-[10px] text-green-600 font-semibold mt-1">Klik untuk lihat detail <i class="fas fa-arrow-right ml-1"></i></p>
                 </div>
                 <div class="w-14 h-14 bg-green-50 rounded-lg flex items-center justify-center group-hover:bg-green-100 transition-colors">
                     <i class="fas fa-user-check text-2xl text-green-600"></i>
-                </div>
-            </div>
-        </a>
-
-        <!-- Pending Card (Link) -->
-        <a href="<?= base_url('adminsurvei-kab/view-assign-sub-sls?status=unassigned') ?>" 
-            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:border-red-400 transition-all group">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600 mb-1 group-hover:text-red-600 transition-colors">Belum di-Assign</p>
-                    <h3 class="text-3xl font-bold text-gray-900"><?= number_format($stats['assignment_pending'], 0, ',', '.') ?></h3>
-                    <p class="text-[10px] text-red-600 font-semibold mt-1">Klik untuk lengkapi <i class="fas fa-arrow-right ml-1"></i></p>
-                </div>
-                <div class="w-14 h-14 bg-red-50 rounded-lg flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                    <i class="fas fa-user-times text-2xl text-red-600"></i>
                 </div>
             </div>
         </a>

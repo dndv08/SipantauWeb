@@ -59,58 +59,83 @@
 </div>
 
 <!-- Filter & Search Bar -->
-<div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
-    <form action="<?= base_url('adminsurvei-kab/usaha-sbr') ?>" method="get" class="flex flex-wrap items-center gap-4">
-        <!-- Pencarian -->
-        <div class="flex-1 min-w-[250px]">
-            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Pencarian</label>
-            <div class="relative">
-                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                    <i class="fas fa-search"></i>
-                </span>
-                <input type="text" name="search" value="<?= esc($filters['search'] ?? '') ?>" placeholder="Cari nama usaha atau pemilik..." class="w-full pl-10 pr-4 py-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+<div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+    <form action="<?= base_url('adminsurvei-kab/usaha-sbr') ?>" method="get" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Pencarian -->
+            <div class="lg:col-span-2">
+                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Pencarian</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" name="search" value="<?= esc($filters['search'] ?? '') ?>" placeholder="Cari nama usaha atau pemilik..." class="w-full pl-10 pr-4 py-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+                </div>
             </div>
-        </div>
 
-        <!-- Filter Wilayah -->
-        <div class="w-full lg:w-auto flex flex-wrap gap-4">
-            <div class="w-40">
+            <!-- Kabupaten -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Kabupaten</label>
+                <select name="kabupaten" id="filter_kabupaten" class="w-full border-gray-200 rounded-lg py-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+                    <option value="">Semua Kabupaten</option>
+                    <?php foreach ($kabupatenList as $k) : ?>
+                        <option value="<?= $k['id_kabupaten'] ?>" <?= ($filters['id_kabupaten'] ?? '') == $k['id_kabupaten'] ? 'selected' : '' ?>>
+                            <?= esc($k['nama_kabupaten']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Kecamatan -->
+            <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Kecamatan</label>
-                <select name="kecamatan" id="kecamatan" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Semua</option>
-                    <?php foreach ($kecamatanList as $k) : ?>
-                        <option value="<?= $k['id_kecamatan'] ?>" <?= ($filters['id_kecamatan'] ?? '') == $k['id_kecamatan'] ? 'selected' : '' ?>>
-                            <?= esc($k['nama_kecamatan']) ?>
+                <select name="kecamatan" id="filter_kecamatan" class="w-full border-gray-200 rounded-lg py-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+                    <option value="">Semua Kecamatan</option>
+                    <?php foreach ($kecamatanList as $kec) : ?>
+                        <option value="<?= $kec['id_kecamatan'] ?>" <?= ($filters['id_kecamatan'] ?? '') == $kec['id_kecamatan'] ? 'selected' : '' ?>>
+                            <?= esc($kec['nama_kecamatan']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            
-            <div class="w-40">
+
+            <!-- Desa -->
+            <div>
                 <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Desa</label>
-                <select name="desa" id="desa" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500" <?= empty($filters['id_kecamatan']) ? 'disabled' : '' ?>>
-                    <option value="">Semua</option>
-                    <?php foreach ($desaList as $d) : ?>
-                        <option value="<?= $d['id_desa'] ?>" <?= ($filters['id_desa'] ?? '') == $d['id_desa'] ? 'selected' : '' ?>>
-                            <?= esc($d['nama_desa']) ?>
+                <select name="desa" id="filter_desa" class="w-full border-gray-200 rounded-lg py-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+                    <option value="">Semua Desa</option>
+                    <?php foreach ($desaList as $desa) : ?>
+                        <option value="<?= $desa['id_desa'] ?>" <?= ($filters['id_desa'] ?? '') == $desa['id_desa'] ? 'selected' : '' ?>>
+                            <?= esc($desa['nama_desa']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
         </div>
 
-        <!-- Buttons -->
-        <div class="flex items-end gap-2 ml-auto">
-            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all flex items-center">
-                Filter
-            </button>
-            <a href="<?= base_url('adminsurvei-kab/usaha-sbr') ?>" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-lg transition-all flex items-center">
-                Reset
-            </a>
-            <div class="border-l border-gray-200 h-8 mx-2"></div>
-            <button type="button" onclick="openImportModal()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all flex items-center">
-                <i class="fas fa-file-import mr-2"></i> Import Excel
-            </button>
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-100">
+            <!-- SLS (pindah baris agar lega) -->
+            <div class="w-full md:w-72">
+                <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">SLS</label>
+                <select name="sls" id="filter_sls" class="w-full border-gray-200 rounded-lg py-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all">
+                    <option value="">Semua SLS</option>
+                    <?php foreach ($slsList as $sls) : ?>
+                        <option value="<?= $sls['id_sls'] ?>" <?= ($filters['id_sls'] ?? '') == $sls['id_sls'] ? 'selected' : '' ?>>
+                            <?= esc($sls['nama_sls']) ?> (<?= substr($sls['id_sls'], -4) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex items-center gap-2">
+                <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-all flex items-center">
+                    <i class="fas fa-filter mr-2"></i> Filter
+                </button>
+                <a href="<?= base_url('adminsurvei-kab/usaha-sbr') ?>" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-lg transition-all flex items-center">
+                    <i class="fas fa-undo mr-2"></i> Reset
+                </a>
+            </div>
         </div>
     </form>
 </div>
@@ -122,238 +147,120 @@
             <thead>
                 <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold uppercase text-xs">
                     <th class="px-6 py-4 text-left tracking-wider w-16">No</th>
-                    <th class="px-6 py-4 text-left tracking-wider">Wilayah (Kec/Des/SLS)</th>
-                    <th class="px-6 py-4 text-left tracking-wider">Identitas Usaha</th>
-                    <th class="px-6 py-4 text-left tracking-wider">Jenis Usaha</th>
-                    <th class="px-6 py-4 text-left tracking-wider">Pemilik</th>
+                    <th class="px-6 py-4 text-left tracking-wider">Nama Usaha</th>
+                    <th class="px-6 py-4 text-left tracking-wider">Alamat</th>
+                    <th class="px-6 py-4 text-left tracking-wider">Kabupaten</th>
+                    <th class="px-6 py-4 text-left tracking-wider">Kecamatan</th>
+                    <th class="px-6 py-4 text-left tracking-wider">Desa</th>
+                    <th class="px-6 py-4 text-left tracking-wider">SLS</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 <?php if (empty($usahaList)) : ?>
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center">
+                        <td colspan="7" class="px-6 py-12 text-center">
                             <div class="flex flex-col items-center justify-center text-gray-400">
                                 <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                     <i class="fas fa-store-slash text-2xl"></i>
                                 </div>
                                 <p class="text-base font-medium">Belum ada data usaha SBR</p>
-                                <p class="text-sm">Silakan lakukan import data atau ubah filter pencarian.</p>
+                                <p class="text-sm">Silakan ubah filter pencarian.</p>
                             </div>
                         </td>
                     </tr>
                 <?php else : ?>
                     <?php foreach ($usahaList as $i => $row) : ?>
                         <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-6 py-4 text-gray-500 font-medium"><?= $i + 1 ?></td>
-                            <td class="px-6 py-4">
-                                <div class="text-gray-900 font-semibold mb-1"><?= esc($row['nama_kecamatan'] ?? '-') ?></div>
-                                <div class="flex flex-col gap-0.5 text-xs">
-                                    <span class="text-gray-500">Desa: <span class="text-gray-700"><?= esc($row['nama_desa'] ?? '-') ?></span></span>
-                                    <span class="text-gray-500">SLS: <span class="text-gray-700"><?= esc($row['nama_sls'] ?? '-') ?></span></span>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-blue-600 font-bold text-base mb-1"><?= esc($row['nama_usaha']) ?></div>
-                                <div class="text-xs text-gray-500 italic max-w-xs truncate" title="<?= esc($row['alamat_usaha'] ?? '-') ?>">
-                                    <i class="fas fa-map-marker-alt mr-1"></i> <?= esc($row['alamat_usaha'] ?? '-') ?>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                    <?= esc($row['jenis_usaha'] ?? 'N/A') ?>
-                                </span>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex items-center">
-                                    <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center mr-3 text-blue-600">
-                                        <i class="fas fa-user text-xs"></i>
-                                    </div>
-                                    <div class="text-gray-900 font-medium">
-                                        <?= esc($row['nama_pemilik'] ?? '-') ?>
-                                    </div>
-                                </div>
-                            </td>
+                            <td class="px-6 py-4 text-gray-500 font-medium"><?= $start_number + $i + 1 ?></td>
+                            <td class="px-6 py-4 font-semibold text-gray-900"><?= esc($row['nama_usaha']) ?></td>
+                            <td class="px-6 py-4 text-gray-600"><?= esc($row['alamat_usaha'] ?? '-') ?></td>
+                            <td class="px-6 py-4 text-gray-600"><?= esc($row['kabupaten'] ?? '-') ?></td>
+                            <td class="px-6 py-4 text-gray-600"><?= esc($row['kecamatan'] ?? '-') ?></td>
+                            <td class="px-6 py-4 text-gray-600"><?= esc($row['desa'] ?? '-') ?></td>
+                            <td class="px-6 py-4 text-gray-600 font-medium"><?= esc($row['sls'] ?? '-') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
         </table>
     </div>
-</div>
-<!-- Modal Import -->
-<div id="importModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-            <div class="absolute inset-0 bg-gray-500 opacity-75" onclick="closeImportModal()"></div>
-        </div>
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <i class="fas fa-file-excel text-blue-600"></i>
-                    </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                            Import Data Usaha SBR
-                        </h3>
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-500 mb-4">
-                                Pastikan file Excel Anda menggunakan format yang sesuai.
-                            </p>
-                            
-                            <a href="<?= base_url('adminsurvei-kab/usaha-sbr/download-template') ?>" class="text-blue-600 hover:text-blue-800 text-sm font-medium inline-flex items-center mb-4">
-                                <i class="fas fa-download mr-1 text-xs"></i> Download Template Excel
-                            </a>
+    
+    <!-- Footer dengan Pagination -->
+    <div class="p-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-sm text-gray-600">
+            Menampilkan data
+            <span class="font-medium"><?= (($pager->getCurrentPage('usaha_sbr') - 1) * $pager->getPerPage('usaha_sbr')) + 1 ?></span>-<span class="font-medium"><?= min($pager->getCurrentPage('usaha_sbr') * $pager->getPerPage('usaha_sbr'), $pager->getTotal('usaha_sbr')) ?></span>
+            dari <span class="font-medium"><?= $pager->getTotal('usaha_sbr') ?></span> data
+        </p>
 
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File Excel</label>
-                                <input type="file" id="importFile" accept=".xlsx, .xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border border-gray-300 rounded-md">
-                            </div>
-
-                            <!-- Progress Bar -->
-                            <div id="importProgress" class="hidden mt-4">
-                                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
-                                </div>
-                                <p id="progressText" class="text-xs text-gray-500 mt-1">Mengupload...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" id="btnDoImport" onclick="doImport()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm transition-all disabled:bg-gray-400">
-                    Mulai Import
-                </button>
-                <button type="button" onclick="closeImportModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Batal
-                </button>
-            </div>
-        </div>
+        <!-- Custom Pagination -->
+        <?php if ($pager->getPageCount('usaha_sbr') > 1): ?>
+            <?= $pager->links('usaha_sbr', 'tailwind_pager') ?>
+        <?php endif; ?>
     </div>
 </div>
 
 <script>
-function openImportModal() {
-    document.getElementById('importModal').classList.remove('hidden');
-}
-
-function closeImportModal() {
-    document.getElementById('importModal').classList.add('hidden');
-}
-
-function doImport() {
-    const fileInput = document.getElementById('importFile');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert('Pilih file terlebih dahulu');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
-
-    const btn = document.getElementById('btnDoImport');
-    const progressDiv = document.getElementById('importProgress');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
-    progressDiv.classList.remove('hidden');
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '<?= base_url('adminsurvei-kab/usaha-sbr/import') ?>', true);
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
-    xhr.upload.onprogress = function(e) {
-        if (e.lengthComputable) {
-            const percent = (e.loaded / e.total) * 100;
-            progressBar.style.width = percent + '%';
-            progressText.innerText = 'Mengupload: ' + Math.round(percent) + '%';
-        }
-    };
-
-    xhr.onload = function() {
-        btn.disabled = false;
-        btn.innerHTML = 'Mulai Import';
-        
-        try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                alert(response.message);
-                location.reload();
-            } else {
-                alert('Gagal: ' + response.message);
-            }
-        } catch (e) {
-            console.error('Parse error:', xhr.responseText);
-            alert('Terjadi kesalahan pada server');
-        }
-    };
-
-    xhr.onerror = function() {
-        btn.disabled = false;
-        btn.innerHTML = 'Mulai Import';
-        alert('Kesalahan jaringan');
-    };
-
-    xhr.send(formData);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    const kecamatanSelect = document.getElementById('kecamatan');
-    const desaSelect = document.getElementById('desa');
-    const slsSelect = document.getElementById('sls');
+    const kabupatenSelect = document.getElementById('filter_kabupaten');
+    const kecamatanSelect = document.getElementById('filter_kecamatan');
+    const desaSelect = document.getElementById('filter_desa');
+    const slsSelect = document.getElementById('filter_sls');
 
-    kecamatanSelect.addEventListener('change', function() {
-        const idKecamatan = this.value;
-        
+    kabupatenSelect.addEventListener('change', function() {
+        const idKab = this.value;
+        kecamatanSelect.innerHTML = '<option value="">Semua Kecamatan</option>';
         desaSelect.innerHTML = '<option value="">Semua Desa</option>';
         slsSelect.innerHTML = '<option value="">Semua SLS</option>';
-        slsSelect.disabled = true;
 
-        if (idKecamatan) {
-            desaSelect.disabled = false;
-            fetch(`<?= base_url('adminsurvei-kab/usaha-sbr/get-desa/') ?>${idKecamatan}`)
-                .then(response => response.json())
+        if (idKab) {
+            fetch(`<?= base_url('adminsurvei-kab/usaha-sbr/get-kecamatan') ?>/${idKab}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(kec => {
+                        const opt = document.createElement('option');
+                        opt.value = kec.id_kecamatan;
+                        opt.textContent = kec.nama_kecamatan;
+                        kecamatanSelect.appendChild(opt);
+                    });
+                });
+        }
+    });
+
+    kecamatanSelect.addEventListener('change', function() {
+        const idKec = this.value;
+        desaSelect.innerHTML = '<option value="">Semua Desa</option>';
+        slsSelect.innerHTML = '<option value="">Semua SLS</option>';
+
+        if (idKec) {
+            fetch(`<?= base_url('adminsurvei-kab/usaha-sbr/get-desa') ?>/${idKec}`)
+                .then(res => res.json())
                 .then(data => {
                     data.forEach(desa => {
-                        const option = document.createElement('option');
-                        option.value = desa.id_desa;
-                        option.textContent = desa.nama_desa;
-                        desaSelect.appendChild(option);
+                        const opt = document.createElement('option');
+                        opt.value = desa.id_desa;
+                        opt.textContent = desa.nama_desa;
+                        desaSelect.appendChild(opt);
                     });
-                })
-                .catch(error => console.error('Error fetching desa:', error));
-        } else {
-            desaSelect.disabled = true;
+                });
         }
     });
 
     desaSelect.addEventListener('change', function() {
         const idDesa = this.value;
-        
         slsSelect.innerHTML = '<option value="">Semua SLS</option>';
 
         if (idDesa) {
-            slsSelect.disabled = false;
-            fetch(`<?= base_url('adminsurvei-kab/usaha-sbr/get-sls/') ?>${idDesa}`)
-                .then(response => response.json())
+            fetch(`<?= base_url('adminsurvei-kab/usaha-sbr/get-sls') ?>/${idDesa}`)
+                .then(res => res.json())
                 .then(data => {
                     data.forEach(sls => {
-                        const option = document.createElement('option');
-                        option.value = sls.id_sls;
-                        option.textContent = sls.nama_sls;
-                        slsSelect.appendChild(option);
+                        const opt = document.createElement('option');
+                        opt.value = sls.id_sls;
+                        opt.textContent = `${sls.nama_sls} (${sls.id_sls.slice(-4)})`;
+                        slsSelect.appendChild(opt);
                     });
-                })
-                .catch(error => console.error('Error fetching sls:', error));
-        } else {
-            slsSelect.disabled = true;
+                });
         }
     });
 });

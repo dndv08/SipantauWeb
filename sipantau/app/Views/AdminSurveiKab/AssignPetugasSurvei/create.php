@@ -60,7 +60,7 @@
                     'options' => $kegiatanList,
                     'optionValue' => 'id_kegiatan_wilayah',
                     'optionText' => function ($k) {
-                                        return $k['nama_kegiatan_detail_proses'] . ' - ' . $k['nama_kegiatan'];
+                                        return $k['nama_kegiatan_detail'] . ' - ' . $k['nama_kegiatan_detail_proses'] . ' (' . date('Y', strtotime($k['tanggal_mulai'])) . ')';
                                     },
                     'onchange' => 'handleKegiatanChange()',
                     'emptyMessage' => 'Tidak ada kegiatan yang tersedia',

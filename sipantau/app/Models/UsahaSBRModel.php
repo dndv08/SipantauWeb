@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class UsahaSBRModel extends Model
 {
-    protected $table = 'usaha_sbr';
+    protected $table = 'usaha_sbr1';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useSoftDeletes = false;
@@ -25,28 +25,104 @@ class UsahaSBRModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
-    public function getFilteredData($idKabupaten, $filters = [])
+    public function getFilteredDataPaginated($filters = [], $perPage = 50)
     {
-        $builder = $this->db->table($this->table . ' u')
-            ->select('u.*, kec.nama_kecamatan, des.nama_desa, sls.nama_sls')
-            ->join('master_kecamatan kec', 'u.id_kecamatan = kec.id_kecamatan', 'left')
-            ->join('master_desa des', 'u.id_desa = des.id_desa', 'left')
-            ->join('master_sls sls', 'u.id_sls = sls.id_sls', 'left')
-            ->where('u.id_kabupaten', $idKabupaten);
-
-        if (!empty($filters['id_kecamatan'])) {
-            $builder->where('u.id_kecamatan', $filters['id_kecamatan']);
+        $this->select('*');
+        
+        if (!empty($filters['kabupaten'])) {
+            $this->where('kabupaten', $filters['kabupaten']);
         }
-        if (!empty($filters['id_desa'])) {
-            $builder->where('u.id_desa', $filters['id_desa']);
+        
+        if (!empty($filters['kecamatan'])) {
+            $this->where('kecamatan', $filters['kecamatan']);
         }
-        if (!empty($filters['id_sls'])) {
-            $builder->where('u.id_sls', $filters['id_sls']);
+        
+        if (!empty($filters['desa'])) {
+            $this->where('desa', $filters['desa']);
         }
+        
+        if (!empty($filters['sls'])) {
+            $this->where('sls', $filters['sls']);
+        }
+        
         if (!empty($filters['search'])) {
-            $builder->like('u.nama_usaha', $filters['search']);
+            $this->groupStart()
+                ->like('nama_usaha', $filters['search'])
+                ->orLike('alamat_usaha', $filters['search'])
+                ->groupEnd();
         }
 
-        return $builder->get()->getResultArray();
+        return [
+            'data' => $this->paginate($perPage, 'usaha_sbr'),
+            'pager' => $this->pager,
+            'total' => $this->pager->getTotal('usaha_sbr')
+        ];
+    }
+
+    public function getTotalUsaha($filters = [])
+    {
+        if (!empty($filters['kabupaten'])) {
+            $this->where('kabupaten', $filters['kabupaten']);
+        }
+        
+        if (!empty($filters['kecamatan'])) {
+            $this->where('kecamatan', $filters['kecamatan']);
+        }
+        
+        if (!empty($filters['desa'])) {
+            $this->where('desa', $filters['desa']);
+        }
+        
+        if (!empty($filters['sls'])) {
+            $this->where('sls', $filters['sls']);
+        }
+        
+        if (!empty($filters['search'])) {
+            $this->groupStart()
+                ->like('nama_usaha', $filters['search'])
+                ->orLike('alamat_usaha', $filters['search'])
+                ->groupEnd();
+        }
+        return $this->countAllResults();
+    }
+
+    public function getStats($filters = [])
+    {
+        $builder = $this->builder();
+        
+        if (!empty($filters['kabupaten'])) {
+            $builder->where('kabupaten', $filters['kabupaten']);
+        }
+        
+        if (!empty($filters['kecamatan'])) {
+            $builder->where('kecamatan', $filters['kecamatan']);
+        }
+        
+        if (!empty($filters['desa'])) {
+            $builder->where('desa', $filters['desa']);
+        }
+        
+        if (!empty($filters['sls'])) {
+            $builder->where('sls', $filters['sls']);
+        }
+        
+        if (!empty($filters['search'])) {
+            $builder->groupStart()
+                ->like('nama_usaha', $filters['search'])
+                ->orLike('alamat_usaha', $filters['search'])
+                ->groupEnd();
+        }
+        
+        $select = "COUNT(*) as total_usaha, 
+                   COUNT(DISTINCT kecamatan) as total_kecamatan, 
+                   COUNT(DISTINCT desa) as total_desa, 
+                   COUNT(DISTINCT CONCAT(desa, '-', sls)) as total_sls";
+                   
+        return $builder->select($select)->get()->getRowArray() ?: [
+            'total_usaha' => 0,
+            'total_kecamatan' => 0,
+            'total_desa' => 0,
+            'total_sls' => 0
+        ];
     }
 }

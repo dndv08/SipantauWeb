@@ -121,6 +121,12 @@
                 class="inline-flex items-center justify-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors whitespace-nowrap">
                 <i class="fas fa-file-excel mr-2"></i> Import Excel
             </button>
+            <a href="<?= base_url('adminsurvei-kab/assign-sub-sls/export') . ($selectedKegiatan ? '?kegiatan=' . $selectedKegiatan : '') ?>"
+                class="inline-flex items-center justify-center px-4 py-2.5 text-white font-medium rounded-lg transition-colors whitespace-nowrap"
+                style="background-color: #f59e0b;"
+                onmouseover="this.style.backgroundColor='#d97706'" onmouseout="this.style.backgroundColor='#f59e0b'">
+                <i class="fas fa-download mr-2"></i> Export Excel
+            </a>
             <button onclick="openCopyConfigModal()"
                 class="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors whitespace-nowrap">
                 <i class="fas fa-copy mr-2"></i> Copy Konfigurasi
@@ -135,7 +141,7 @@
                 <tr class="bg-gray-50 border-b border-gray-200 text-left">
                     <th class="px-4 py-3 text-sm font-semibold text-gray-700">No</th>
                     <th class="px-4 py-3 text-sm font-semibold text-gray-700">Kegiatan</th>
-                    <th class="px-4 py-3 text-sm font-semibold text-gray-700">Wilayah (Kec/Des/SLS)</th>
+                    <th class="px-4 py-3 text-sm font-semibold text-gray-700">Wilayah (Kec/Des/Sub-SLS)</th>
                     <th class="px-4 py-3 text-sm font-semibold text-gray-700">Petugas</th>
                     <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700">Aksi</th>
                 </tr>
@@ -157,9 +163,21 @@
                                 <div class="text-xs text-gray-500"><?= esc($row['nama_kegiatan_detail_proses']) ?></div>
                             </td>
                             <td class="px-4 py-3">
-                                <div class="text-sm font-semibold text-gray-900"><?= esc($row['nama_kecamatan']) ?></div>
-                                <div class="text-xs text-gray-500"><?= esc($row['real_nama_desa']) ?></div>
-                                <div class="text-xs text-blue-600 font-mono mt-1">SLS: <?= esc($row['nama_sls']) ?> (<?= esc($row['id_sub_sls']) ?>)</div>
+                                <div class="text-sm font-bold text-gray-900 uppercase">
+                                    <?= esc($row['nama_kecamatan'] ?: 'Kec. Tidak Terdata') ?>
+                                </div>
+                                <div class="text-xs font-medium text-gray-700">
+                                    <?= esc($row['real_nama_desa'] ?: ($row['nama_desa'] ?: 'Desa Tidak Terdata')) ?>
+                                </div>
+                                <div class="mt-1 flex items-center gap-2">
+                                    <span class="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded border border-blue-100">
+                                        SUB-SLS: <?= substr($row['id_sub_sls'], -2) ?>
+                                    </span>
+                                    <span class="text-[10px] text-gray-400 font-mono"><?= esc($row['id_sub_sls']) ?></span>
+                                </div>
+                                <div class="text-[10px] text-gray-500 italic mt-0.5">
+                                    SLS: <?= esc($row['nama_sls']) ?>
+                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="text-sm font-semibold text-gray-900"><?= esc($row['nama_petugas']) ?></div>

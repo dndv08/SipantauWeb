@@ -40,7 +40,7 @@
                         <select id="id_kecamatan" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">-- Pilih Kecamatan --</option>
                             <?php foreach ($kecamatanList as $kec) : ?>
-                                <option value="<?= $kec['id_kecamatan'] ?>" <?= $currentDesa['id_kecamatan'] == $kec['id_kecamatan'] ? 'selected' : '' ?>><?= esc($kec['nama_kecamatan']) ?></option>
+                                <option value="<?= $kec['id_kecamatan'] ?>" <?= ($currentDesa['id_kecamatan'] ?? '') == $kec['id_kecamatan'] ? 'selected' : '' ?>><?= esc($kec['nama_kecamatan']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -50,7 +50,7 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Desa/Kelurahan</label>
                         <select id="id_desa" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">-- Pilih Desa --</option>
-                            <option value="<?= $currentDesa['id_desa'] ?>" selected><?= esc($currentDesa['nama_desa']) ?></option>
+                            <option value="<?= $currentDesa['id_desa'] ?? '' ?>" selected><?= esc($currentDesa['nama_desa'] ?? '') ?></option>
                         </select>
                     </div>
 
@@ -59,7 +59,7 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">SLS</label>
                         <select id="id_sls" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">-- Pilih SLS --</option>
-                            <option value="<?= $currentSls['id_sls'] ?>" selected><?= esc($currentSls['nama_sls']) ?></option>
+                            <option value="<?= $currentSls['id_sls'] ?? '' ?>" selected><?= esc($currentSls['nama_sls'] ?? '') ?></option>
                         </select>
                     </div>
 
@@ -68,7 +68,7 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Sub-SLS</label>
                         <select name="id_sub_sls" id="id_sub_sls" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             <option value="">-- Pilih Sub-SLS --</option>
-                            <option value="<?= $currentSubSls['id_sub_sls'] ?>" selected><?= esc($currentSubSls['id_sub_sls']) ?></option>
+                            <option value="<?= $currentSubSls['id_sub_sls'] ?? '' ?>" selected><?= esc(isset($currentSubSls['id_sub_sls']) ? substr($currentSubSls['id_sub_sls'], -2) : '') ?> - <?= esc($currentSls['nama_sls'] ?? '') ?></option>
                         </select>
                     </div>
                 </div>
@@ -135,7 +135,7 @@ document.getElementById('id_sls').addEventListener('change', function() {
         .then(res => res.json())
         .then(data => {
             data.forEach(ss => {
-                subSlsSelect.innerHTML += `<option value="${ss.id_sub_sls}">${ss.id_sub_sls}</option>`;
+                subSlsSelect.innerHTML += `<option value="${ss.id_sub_sls}">${ss.display_name}</option>`;
             });
         });
 });

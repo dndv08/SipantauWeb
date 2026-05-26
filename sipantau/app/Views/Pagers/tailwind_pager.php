@@ -1,6 +1,26 @@
-<?php if ($pager->getPageCount('default') > 1): ?>
+<?php 
+$pager->setSurroundCount(1); // Menampilkan 1 angka sebelum dan 1 sesudah halaman saat ini (total 3 angka)
+if ($pager->getPageCount('default') > 1): 
+?>
 <nav aria-label="Page navigation" class="flex justify-center mt-6">
     <ul class="flex items-center space-x-2">
+        <!-- Tombol First -->
+        <?php if ($pager->hasPreviousPage('default')): ?>
+            <li>
+                <a href="<?= $pager->getFirst('default') ?>"
+                    class="flex items-center justify-center px-3 h-10 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm font-medium"
+                    aria-label="First">
+                    First
+                </a>
+            </li>
+        <?php else: ?>
+            <li>
+                <span class="flex items-center justify-center px-3 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed text-sm font-medium">
+                    First
+                </span>
+            </li>
+        <?php endif; ?>
+
         <!-- Tombol Previous -->
         <?php if ($pager->hasPreviousPage('default')): ?>
             <li>
@@ -12,8 +32,7 @@
             </li>
         <?php else: ?>
             <li>
-                <span
-                    class="flex items-center justify-center w-10 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+                <span class="flex items-center justify-center w-10 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
                     &laquo;
                 </span>
             </li>
@@ -47,9 +66,25 @@
             </li>
         <?php else: ?>
             <li>
-                <span
-                    class="flex items-center justify-center w-10 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
+                <span class="flex items-center justify-center w-10 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed">
                     &raquo;
+                </span>
+            </li>
+        <?php endif; ?>
+
+        <!-- Tombol Last -->
+        <?php if ($pager->hasNextPage('default')): ?>
+            <li>
+                <a href="<?= $pager->getLast('default') ?>"
+                    class="flex items-center justify-center px-3 h-10 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm font-medium"
+                    aria-label="Last">
+                    Last
+                </a>
+            </li>
+        <?php else: ?>
+            <li>
+                <span class="flex items-center justify-center px-3 h-10 text-gray-300 bg-gray-100 border border-gray-200 rounded-lg cursor-not-allowed text-sm font-medium">
+                    Last
                 </span>
             </li>
         <?php endif; ?>

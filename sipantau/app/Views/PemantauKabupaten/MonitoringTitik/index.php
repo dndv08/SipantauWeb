@@ -1,4 +1,4 @@
-<?= $this->extend('layouts/pemantau_kabupaten_layout') ?>
+<?= $this->extend($layout ?? 'layouts/pemantau_kabupaten_layout') ?>
 
 <?= $this->section('content') ?>
 
@@ -6,6 +6,32 @@
     <h1 class="text-2xl font-bold text-gray-900">Monitoring Titik Kegiatan</h1>
     <p class="text-sm text-gray-600 mt-1">Pantau lokasi kegiatan petugas dan unduh dokumentasi pelaporan.</p>
 </div>
+
+<!-- Flash Alerts -->
+<?php if (session()->getFlashdata('error')): ?>
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-circle-xmark text-red-500 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-red-700 font-medium"><?= esc(session()->getFlashdata('error')) ?></p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+<?php if (session()->getFlashdata('success')): ?>
+    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded shadow-sm">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-circle-check text-green-500 text-lg"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-green-700 font-medium"><?= esc(session()->getFlashdata('success')) ?></p>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
 <!-- Filter Section -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -141,6 +167,12 @@
                 const result = await response.json();
 
                 if (result.success && result.data.length > 0) {
+                    // Tambahkan opsi "Semua Petugas" di awal
+                    const optAll = document.createElement('option');
+                    optAll.value = 'all';
+                    optAll.textContent = 'Semua Petugas';
+                    selectPetugas.appendChild(optAll);
+
                     result.data.forEach(p => {
                         const opt = document.createElement('option');
                         opt.value = p.id_pcl;
@@ -173,6 +205,13 @@
         btnDownload.addEventListener('click', function() {
             const idProses = selectKegiatan.value;
             const idPCL = selectPetugas.value;
+            const totalTitik = parseInt(document.getElementById('display_total_titik').textContent || '0');
+
+            if (totalTitik === 0) {
+                alert('Tidak ada data dokumentasi untuk diunduh (jumlah titik = 0).');
+                return;
+            }
+
             if (idProses && idPCL) {
                 window.location.href = `${apiBase}/download-dokumentasi?id_kegiatan_detail_proses=${idProses}&id_pcl=${idPCL}`;
             }
@@ -235,7 +274,8 @@
                                 ${point.imagepath ? `<img src="<?= base_url() ?>/${point.imagepath}" class="w-full h-40 object-cover border-b" onerror="this.src='<?= base_url('assets/gambar/no-image.png') ?>'">` : '<div class="h-40 bg-gray-100 flex items-center justify-center border-b"><i class="fas fa-image text-gray-300 text-3xl"></i></div>'}
                                 <div class="p-3">
                                     <p class="text-xs text-gray-500 mb-1 font-semibold">${formatDateTime(point.created_at)}</p>
-                                    <p class="text-sm font-bold text-gray-800 mb-2">${point.nama_kecamatan}, ${point.nama_desa}</p>
+                                    <p class="text-sm font-bold text-gray-800 mb-1">${point.nama_kecamatan}, ${point.nama_desa}</p>
+                                    <p class="text-xs text-blue-600 font-semibold mb-2">Petugas: ${point.nama_pcl || '-'}</p>
                                     <div class="bg-gray-50 p-2 rounded text-xs text-gray-600 italic">
                                         "${point.resume || 'Tidak ada catatan'}"
                                     </div>

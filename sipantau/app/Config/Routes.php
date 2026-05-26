@@ -233,6 +233,7 @@ $routes->group('adminsurvei-kab', ['filter' => 'role:3'], static function ($rout
         // Import
         $routes->get('download-template/(:num)', 'AdminKab\AssignSubSLSController::downloadTemplate/$1');
         $routes->post('import', 'AdminKab\AssignSubSLSController::import');
+        $routes->get('export', 'AdminKab\AssignSubSLSController::export');
 
         // Copy Configuration
         $routes->post('get-kegiatan-for-copy', 'AdminKab\AssignSubSLSController::getKegiatanForCopy');
@@ -282,6 +283,7 @@ $routes->group('adminsurvei-kab', ['filter' => 'role:3'], static function ($rout
     // ===== Usaha SBR Routes =====
     $routes->group('usaha-sbr', static function ($routes) {
         $routes->get('/', 'AdminKab\UsahaSBRController::index');
+        $routes->get('get-kecamatan/(:num)', 'AdminKab\UsahaSBRController::getKecamatan/$1');
         $routes->get('get-desa/(:num)', 'AdminKab\UsahaSBRController::getDesa/$1');
         $routes->get('get-sls/(:num)', 'AdminKab\UsahaSBRController::getSLS/$1');
         $routes->get('download-template', 'AdminKab\UsahaSBRController::downloadTemplate');
@@ -376,6 +378,7 @@ $routes->group('pemantau-kabupaten', ['filter' => 'role:3'], static function ($r
     // ===== Usaha SBR Routes =====
     $routes->group('usaha-sbr', static function ($routes) {
         $routes->get('/', 'PemantauKab\UsahaSBRController::index');
+        $routes->get('get-kecamatan/(:num)', 'PemantauKab\UsahaSBRController::getKecamatan/$1');
         $routes->get('get-desa/(:num)', 'PemantauKab\UsahaSBRController::getDesa/$1');
         $routes->get('get-sls/(:num)', 'PemantauKab\UsahaSBRController::getSLS/$1');
     });

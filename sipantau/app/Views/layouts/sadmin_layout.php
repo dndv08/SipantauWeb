@@ -268,6 +268,49 @@
         onclick="toggleSidebar()"></div>
 
     <script src="<?= base_url('assets/js/admin.js') ?>"></script>
+
+    <!-- Inline Table Loading Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterForms = document.querySelectorAll('form[method="get"], form[method="GET"]');
+        
+        function showInlineLoader() {
+            // Target container table
+            let container = document.querySelector('.overflow-x-auto') || 
+                            document.querySelector('.table-responsive') || 
+                            document.querySelector('table')?.parentElement;
+                            
+            if (container) {
+                if (window.getComputedStyle(container).position === 'static') {
+                    container.style.position = 'relative';
+                }
+                
+                const existingLoader = document.getElementById('inline-filter-loader');
+                if (existingLoader) existingLoader.remove();
+
+                const loaderOverlay = document.createElement('div');
+                loaderOverlay.id = 'inline-filter-loader';
+                loaderOverlay.className = 'absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-[2px] transition-opacity duration-200 rounded-lg';
+                loaderOverlay.innerHTML = '<div class="animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-blue-600"></div>';
+                
+                container.appendChild(loaderOverlay);
+            }
+        }
+
+        filterForms.forEach(form => {
+            form.addEventListener('submit', showInlineLoader);
+
+            const selects = form.querySelectorAll('select[onchange*="submit"]');
+            selects.forEach(select => {
+                select.removeAttribute('onchange');
+                select.addEventListener('change', function() {
+                    showInlineLoader();
+                    form.submit();
+                });
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>

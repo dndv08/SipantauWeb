@@ -42,25 +42,8 @@
                         </select>
                     </div>
 
-                    <div class="md:col-span-2">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Level Penugasan *</label>
-                        <div class="grid grid-cols-2 gap-4">
-                            <label class="relative flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition-all group border-blue-200 bg-blue-50" id="label_level_sls">
-                                <input type="radio" name="assignment_level" value="sls" class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500" checked onchange="toggleLevel('sls')">
-                                <div class="ml-4">
-                                    <span class="block text-sm font-bold text-gray-900">Per SLS</span>
-                                    <span class="block text-xs text-gray-500">Assign petugas ke seluruh wilayah dalam satu SLS</span>
-                                </div>
-                            </label>
-                            <label class="relative flex items-center p-4 border rounded-xl cursor-pointer hover:bg-blue-50 transition-all group" id="label_level_sub_sls">
-                                <input type="radio" name="assignment_level" value="sub_sls" class="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500" onchange="toggleLevel('sub_sls')">
-                                <div class="ml-4">
-                                    <span class="block text-sm font-bold text-gray-900">Per Sub-SLS</span>
-                                    <span class="block text-xs text-gray-500">Assign petugas spesifik ke satu Sub-SLS saja</span>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
+                    <!-- Level Penugasan (REMOVED - Always Sub-SLS) -->
+                    <input type="hidden" name="assignment_level" value="sub_sls">
                 </div>
             </div>
 
@@ -96,9 +79,9 @@
                         </select>
                     </div>
 
-                    <div id="sub_sls_container" class="hidden opacity-50">
+                    <div id="sub_sls_container">
                         <label class="block text-sm font-bold text-gray-700 mb-2">Sub-SLS *</label>
-                        <select name="id_sub_sls" id="id_sub_sls" disabled
+                        <select name="id_sub_sls" id="id_sub_sls" required disabled
                             class="w-full border-gray-300 rounded-xl py-3 focus:ring-4 focus:ring-blue-100 disabled:bg-gray-50 disabled:cursor-not-allowed transition-all">
                             <option value="">-- Pilih Sub-SLS --</option>
                         </select>
@@ -145,25 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const kegiatanSelect = document.getElementById('id_kegiatan_wilayah');
     const petugasSelect = document.getElementById('sobat_id');
 
-    // Toggle Level Function
-    window.toggleLevel = function(level) {
-        const subSlsContainer = document.getElementById('sub_sls_container');
-        const subSlsSelect = document.getElementById('id_sub_sls');
-        const labelSLS = document.getElementById('label_level_sls');
-        const labelSubSLS = document.getElementById('label_level_sub_sls');
-        
-        if (level === 'sls') {
-            subSlsContainer.classList.add('hidden', 'opacity-50');
-            subSlsSelect.required = false;
-            labelSLS.classList.add('bg-blue-50', 'border-blue-200');
-            labelSubSLS.classList.remove('bg-blue-50', 'border-blue-200');
-        } else {
-            subSlsContainer.classList.remove('hidden', 'opacity-50');
-            subSlsSelect.required = true;
-            labelSubSLS.classList.add('bg-blue-50', 'border-blue-200');
-            labelSLS.classList.remove('bg-blue-50', 'border-blue-200');
-        }
-    };
+    // Level Penugasan is now always sub_sls
 
     // Helper to toggle loading state
     function setLoading(el, loading = true) {
@@ -235,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     data.forEach(d => {
                         const opt = document.createElement('option');
                         opt.value = d.id_sub_sls;
-                        opt.textContent = d.id_sub_sls + ' - ' + d.nama_sls;
+                        opt.textContent = d.display_name; // Use formatted display_name
                         subSlsSelect.appendChild(opt);
                     });
                     subSlsSelect.disabled = false;

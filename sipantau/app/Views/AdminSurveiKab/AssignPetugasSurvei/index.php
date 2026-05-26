@@ -822,7 +822,20 @@
             cancelButtonText: 'Batal'
         }).then((result) => {
             if (result.isConfirmed) {
-                window.location.href = '<?= base_url('adminsurvei-kab/assign-petugas/delete/') ?>' + idPML + '?force=true';
+                // Buat form dinamis untuk method POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '<?= base_url('adminsurvei-kab/assign-petugas/delete/') ?>' + idPML + '?force=true';
+
+                // Tambahkan CSRF Token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '<?= csrf_token() ?>';
+                csrfInput.value = '<?= csrf_hash() ?>';
+                form.appendChild(csrfInput);
+
+                document.body.appendChild(form);
+                form.submit();
             }
         });
     }

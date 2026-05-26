@@ -592,6 +592,37 @@ class AssignPetugasController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Kegiatan wilayah tidak ditemukan');
         }
 
+        // Cek duplikasi PML
+        $existingPML = $this->pmlModel->where('sobat_id', $pmlSobatId)
+                                      ->where('id_kegiatan_wilayah', $idKegiatanWilayah)
+                                      ->first();
+        if ($existingPML) {
+            return redirect()->back()->withInput()->with('error', 'Petugas tersebut sudah di-assign sebagai PML di kegiatan ini.');
+        }
+
+        // Cek duplikasi PCL
+        $pclIdsInForm = [];
+        if ($pclData && is_array($pclData)) {
+            foreach ($pclData as $pcl) {
+                if (!empty($pcl['sobat_id'])) {
+                    if (in_array($pcl['sobat_id'], $pclIdsInForm)) {
+                        return redirect()->back()->withInput()->with('error', "Petugas dengan ID {$pcl['sobat_id']} dipilih lebih dari satu kali dalam form.");
+                    }
+                    $pclIdsInForm[] = $pcl['sobat_id'];
+
+                    $existingPCL = $this->pclModel->db->table('pcl')
+                        ->join('pml', 'pml.id_pml = pcl.id_pml')
+                        ->where('pcl.sobat_id', $pcl['sobat_id'])
+                        ->where('pml.id_kegiatan_wilayah', $idKegiatanWilayah)
+                        ->get()->getRowArray();
+
+                    if ($existingPCL) {
+                        return redirect()->back()->withInput()->with('error', "Petugas dengan ID {$pcl['sobat_id']} sudah di-assign sebagai PCL di kegiatan ini.");
+                    }
+                }
+            }
+        }
+
         $targetWilayah = (int) $kegiatanWilayah['target_wilayah'];
 
         // Hitung total target PML yang sudah ada
@@ -1567,6 +1598,35 @@ class AssignPetugasController extends BaseController
                     $pclUser = $this->userModel->find($pclSobatId);
                     if (!$pclUser || $pclUser['id_kabupaten'] != $idKabupaten) {
                         $errors[] = "Baris {$rowNumber}: SOBAT ID PCL '{$pclSobatId}' tidak valid";
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Validasi PCL tidak boleh sudah ada di DB untuk kegiatan ini
+                    $existingPCL = $this->pclModel->db->table('pcl')
+                        ->join('pml', 'pml.id_pml = pcl.id_pml')
+                        ->where('pcl.sobat_id', $pclSobatId)
+                        ->where('pml.id_kegiatan_wilayah', $idKegiatanWilayah)
+                        ->get()->getRowArray();
+                    
+                    if ($existingPCL) {
+                        $errors[] = "Baris {$rowNumber}: PCL '{$pclSobatId}' sudah di-assign di kegiatan ini";
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Validasi PCL duplikat di dalam file excel ini
+                    $isDuplicateInFile = false;
+                    foreach ($pmlData as $pData) {
+                        foreach ($pData['pcl'] as $pPcl) {
+                            if ($pPcl['sobat_id'] == $pclSobatId) {
+                                $isDuplicateInFile = true;
+                                break 2;
+                            }
+                        }
+                    }
+                    if ($isDuplicateInFile) {
+                        $errors[] = "Baris {$rowNumber}: PCL '{$pclSobatId}' dimasukkan lebih dari satu kali dalam file";
                         $skipped++;
                         continue;
                     }

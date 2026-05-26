@@ -64,6 +64,14 @@
                     <p class="text-sm font-bold text-blue-600 font-mono"><?= esc($assignment['id_sub_sls']) ?></p>
                 </div>
             </div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+                <a href="<?= base_url('adminsurvei-kab/assign-sub-sls/edit/' . $assignment['id_assignment_sub_sls']) ?>" class="inline-flex items-center justify-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded transition-colors shadow-sm">
+                    <i class="fas fa-edit mr-1"></i> Edit Assignment
+                </a>
+                <button onclick="confirmDelete(<?= $assignment['id_assignment_sub_sls'] ?>)" class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition-colors shadow-sm">
+                    <i class="fas fa-trash-alt mr-1"></i> Hapus Assignment
+                </button>
+            </div>
         </div>
     </div>
 
@@ -91,14 +99,6 @@
                         <p class="text-sm text-gray-700"><?= esc($assignment['hp'] ?: '-') ?></p>
                     </div>
                 </div>
-            </div>
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
-                <a href="<?= base_url('adminsurvei-kab/assign-sub-sls/edit/' . $assignment['id_assignment_sub_sls']) ?>" class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-semibold rounded transition-colors shadow-sm">
-                    <i class="fas fa-edit mr-1"></i> Edit
-                </a>
-                <button onclick="confirmDelete(<?= $assignment['id_assignment_sub_sls'] ?>)" class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded transition-colors shadow-sm">
-                    <i class="fas fa-trash-alt mr-1"></i> Hapus
-                </button>
             </div>
         </div>
     </div>

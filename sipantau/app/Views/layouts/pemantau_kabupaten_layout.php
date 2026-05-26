@@ -222,6 +222,53 @@ if ($userKabupatenId) {
 
     <!-- Scripts -->
     <script src="<?= base_url('assets/js/admin.js') ?>"></script>
+
+    <!-- Inline Table Loading Script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterForms = document.querySelectorAll('form[method="get"], form[method="GET"]');
+        
+        function showInlineLoader() {
+            const table = document.querySelector('table');
+            let container = document.querySelector('.overflow-x-auto') || 
+                            document.querySelector('.table-responsive') || 
+                            (table ? table.parentElement : null) ||
+                            document.querySelector('main');
+                            
+            if (container) {
+                if (window.getComputedStyle(container).position === 'static') {
+                    container.style.position = 'relative';
+                }
+                
+                const existingLoader = document.getElementById('inline-filter-loader');
+                if (existingLoader) existingLoader.remove();
+
+                const loaderOverlay = document.createElement('div');
+                loaderOverlay.id = 'inline-filter-loader';
+                loaderOverlay.className = 'absolute inset-0 z-[99] flex items-center justify-center bg-white bg-opacity-70 backdrop-blur-sm rounded-lg';
+                loaderOverlay.innerHTML = '<div class="animate-spin rounded-full h-10 w-10 border-[4px] border-gray-200 border-t-blue-600"></div>';
+                
+                container.appendChild(loaderOverlay);
+            }
+        }
+
+        filterForms.forEach(form => {
+            form.addEventListener('submit', showInlineLoader);
+
+            const selects = form.querySelectorAll('select');
+            selects.forEach(select => {
+                const onchange = select.getAttribute('onchange');
+                if (onchange && onchange.includes('submit')) {
+                    select.removeAttribute('onchange');
+                    select.addEventListener('change', function() {
+                        showInlineLoader();
+                        form.submit();
+                    });
+                }
+            });
+        });
+    });
+    </script>
 </body>
 
 </html>

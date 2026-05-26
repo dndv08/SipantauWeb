@@ -129,6 +129,15 @@ class DashboardController extends BaseController
             ->where('kwa.id_admin_kabupaten', $idAdminKabupaten)
             ->countAllResults();
 
+        $assignedKegiatanCount = $this->db->query("
+            SELECT COUNT(DISTINCT ass.id_kegiatan_wilayah) as total
+            FROM assignment_sub_sls ass
+            JOIN kegiatan_wilayah kw ON ass.id_kegiatan_wilayah = kw.id_kegiatan_wilayah
+            JOIN kegiatan_wilayah_admin kwa ON kwa.id_kegiatan_wilayah = kw.id_kegiatan_wilayah
+            WHERE kw.id_kabupaten = ?
+            AND kwa.id_admin_kabupaten = ?
+        ", [$idKabupaten, $idAdminKabupaten])->getRowArray();
+
         return [
             'total_kegiatan' => (int) ($totalKegiatan['total'] ?? 0),
             'kegiatan_aktif' => (int) ($kegiatanAktif['total'] ?? 0),
@@ -136,7 +145,8 @@ class DashboardController extends BaseController
             'sub_sls_total' => $totalSubSlsInKab,
             'assignment_total' => $totalRequiredAssignments,
             'assignment_done' => $totalAssigned,
-            'assignment_pending' => max(0, $totalRequiredAssignments - $totalAssigned)
+            'assignment_pending' => max(0, $totalRequiredAssignments - $totalAssigned),
+            'kegiatan_has_assignment' => (int) ($assignedKegiatanCount['total'] ?? 0)
         ];
     }
 

@@ -73,7 +73,8 @@
                                 <div class="text-xs text-gray-400">SLS: <?= esc($row['nama_sls']) ?></div>
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-900 border-r">
-                                <?= esc($row['id_sub_sls']) ?>
+                                <span class="font-mono font-bold text-blue-600"><?= substr($row['id_sub_sls'], -2) ?></span>
+                                <div class="text-[10px] text-gray-400"><?= esc($row['id_sub_sls']) ?></div>
                             </td>
                             <td class="px-4 py-3 text-sm border-r">
                                 <?php if ($row['id_assignment_sub_sls']) : ?>
