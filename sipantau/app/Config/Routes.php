@@ -385,6 +385,52 @@ $routes->group('pemantau-kabupaten', ['filter' => 'role:3'], static function ($r
 
 });
 
+// ================== PETUGAS (id_role = 4) ==================
+$routes->group('petugas', ['filter' => 'role:4'], static function ($routes) {
+
+    // ===== Dashboard =====
+    $routes->get('/', 'Petugas\DashboardController::index');
+    $routes->get('get-statistik', 'Petugas\DashboardController::getStatistik');
+
+    // ===== Lapor Aktivitas Petugas =====
+    $routes->get('lapor-aktivitas', 'Petugas\LaporAktivitasController::index');
+    $routes->post('lapor-aktivitas/store', 'Petugas\LaporAktivitasController::store');
+    $routes->get('lapor-aktivitas/history', 'Petugas\LaporAktivitasController::history');
+    $routes->delete('lapor-aktivitas/(:num)', 'Petugas\LaporAktivitasController::delete/$1');
+    // AJAX cascading wilayah
+    $routes->get('lapor-aktivitas/get-desa/(:any)', 'Petugas\LaporAktivitasController::getDesa/$1');
+    $routes->get('lapor-aktivitas/get-sls/(:any)', 'Petugas\LaporAktivitasController::getSLS/$1');
+    $routes->get('lapor-aktivitas/get-sub-sls/(:any)', 'Petugas\LaporAktivitasController::getSubSLS/$1');
+    // Serve foto dari writable/uploads
+    $routes->get('lapor-aktivitas/foto', 'Petugas\LaporAktivitasController::fotoAktivitas');
+
+    // ===== Lapor Industri Digital SE2026 =====
+    $routes->get('lapor-industri', 'Petugas\LaporIndustriController::index');
+    $routes->post('lapor-industri/store', 'Petugas\LaporIndustriController::store');
+    $routes->get('lapor-industri/get-pcl-recap/(:any)', 'Petugas\LaporIndustriController::getPCLRecap/$1');
+    $routes->get('lapor-industri/history', 'Petugas\LaporIndustriController::history');
+
+    // ===== Daftar Kegiatan =====
+    $routes->get('daftar-kegiatan', 'Petugas\DaftarKegiatanController::index');
+    $routes->get('daftar-kegiatan/detail-pcl/(:num)', 'Petugas\DaftarKegiatanController::detailPCL/$1');
+    $routes->get('daftar-kegiatan/detail-pml/(:num)', 'Petugas\DaftarKegiatanController::detailPML/$1');
+
+    // ===== Pantau Progress =====
+    $routes->get('pantau-progress', 'Petugas\PantauProgressController::index');
+    $routes->get('pantau-progress/get-data', 'Petugas\PantauProgressController::getData');
+
+    // ===== Kinerja Harian =====
+    $routes->get('kinerja-harian', 'Petugas\KinerjaHarianController::index');
+    $routes->get('kinerja-harian/get-data', 'Petugas\KinerjaHarianController::getData');
+
+    // ===== Achievement =====
+    $routes->get('achievement', 'Petugas\AchievementController::index');
+
+    // ===== Feedback =====
+    $routes->get('feedback', 'Petugas\FeedbackController::index');
+    $routes->post('feedback/store', 'Petugas\FeedbackController::store');
+});
+
 // ================== API AUTH LOGIN ==================
 $routes->group('api/auth', ['namespace' => 'App\Controllers\Api\Auth'], static function ($routes) {
     $routes->post('login', 'AuthController::login');

@@ -18,6 +18,13 @@ class PantauProgressModel extends Model
         'jumlah_realisasi_absolut',
         'jumlah_realisasi_kumulatif',
         'catatan_aktivitas',
+        'foto_aktivitas',
+        'latitude',
+        'longitude',
+        'id_kecamatan',
+        'id_desa',
+        'id_sls',
+        'id_sub_sls',
         'created_at',
         'updated_at'
     ];

@@ -11,8 +11,8 @@ use App\Models\AdminSurveiKabupatenModel;
 class LoginController extends BaseController
 {
     // Role yang diperbolehkan login ke web
-    private const ALLOWED_WEB_ROLES = [1, 2, 3]; // Super Admin, Pemantau Provinsi, Pemantau Kabupaten
-    private const MOBILE_ONLY_ROLES = [4, 5]; // Role 4 = Petugas, Role 5 = lainnya (mobile only)
+    private const ALLOWED_WEB_ROLES = [1, 2, 3, 4]; // Super Admin, Pemantau Provinsi, Pemantau Kabupaten, Petugas
+    private const MOBILE_ONLY_ROLES = [5]; // Role 5 = lainnya (mobile only)
 
     public function Home()
     {
@@ -133,6 +133,12 @@ class LoginController extends BaseController
                     'id' => 3,
                     'type' => 'pemantau_kabupaten',
                 ];
+            } elseif ($roleId == 4) {
+                // Petugas Survei (PCL/PML)
+                $availableRoles[] = [
+                    'id' => 4,
+                    'type' => 'petugas',
+                ];
             }
         }
 
@@ -219,6 +225,9 @@ class LoginController extends BaseController
                 } elseif ($roleType === 'pemantau_kabupaten') {
                     $roleInfo['roleuser'] = 'Pemantau Kabupaten';
                     $roleInfo['keterangan'] = 'Melihat data kabupaten';
+                } elseif ($roleType === 'petugas') {
+                    $roleInfo['roleuser'] = 'Petugas Survei';
+                    $roleInfo['keterangan'] = 'PCL / PML - Petugas lapangan survei';
                 }
 
                 $roleInfo['role_type'] = $roleType;
@@ -305,6 +314,7 @@ class LoginController extends BaseController
             'role_type' => $roleType,
             'all_roles' => $userRoles,
             'total_available_roles' => $totalRoles, // TAMBAHKAN INI
+            'user_kabupaten_id' => $user['id_kabupaten'] ?? null,
             'isLoggedIn' => true,
         ];
 
@@ -346,6 +356,10 @@ class LoginController extends BaseController
                 }
                 // Pemantau Kabupaten
                 return redirect()->to('/pemantau-kabupaten');
+
+            case 4:
+                // Petugas Survei (PCL / PML)
+                return redirect()->to('/petugas');
 
             default:
                 session()->setFlashdata('error', 'Role tidak dikenali atau tidak memiliki akses ke sistem web.');
@@ -405,6 +419,11 @@ class LoginController extends BaseController
                     'id' => 3,
                     'type' => 'pemantau_kabupaten',
                 ];
+            } elseif ($roleId == 4) {
+                $availableRoles[] = [
+                    'id' => 4,
+                    'type' => 'petugas',
+                ];
             }
         }
 
@@ -456,6 +475,9 @@ class LoginController extends BaseController
                 } elseif ($roleType === 'pemantau_kabupaten') {
                     $roleInfo['roleuser'] = 'Pemantau Kabupaten';
                     $roleInfo['keterangan'] = 'Melihat data kabupaten';
+                } elseif ($roleType === 'petugas') {
+                    $roleInfo['roleuser'] = 'Petugas Survei';
+                    $roleInfo['keterangan'] = 'PCL / PML - Petugas lapangan survei';
                 }
 
                 $roleInfo['role_type'] = $roleType;
@@ -513,6 +535,8 @@ class LoginController extends BaseController
                 $availableRoles[] = ['id' => 2, 'type' => 'pemantau_provinsi'];
             } elseif ($roleId == 3) {
                 $availableRoles[] = ['id' => 3, 'type' => 'pemantau_kabupaten'];
+            } elseif ($roleId == 4) {
+                $availableRoles[] = ['id' => 4, 'type' => 'petugas'];
             }
         }
 
