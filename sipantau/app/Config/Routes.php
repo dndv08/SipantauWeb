@@ -279,6 +279,7 @@ $routes->group('adminsurvei-kab', ['filter' => 'role:3'], static function ($rout
         $routes->get('get-petugas/(:num)', 'PemantauKab\MonitoringTitikController::getPetugas/$1');
         $routes->get('get-data', 'PemantauKab\MonitoringTitikController::getData');
         $routes->get('download-dokumentasi', 'PemantauKab\MonitoringTitikController::downloadDokumentasi');
+        $routes->get('foto', 'PemantauKab\MonitoringTitikController::fotoAktivitas');
     });
     // ===== Usaha SBR Routes =====
     $routes->group('usaha-sbr', static function ($routes) {
@@ -372,6 +373,7 @@ $routes->group('pemantau-kabupaten', ['filter' => 'role:3'], static function ($r
         $routes->get('get-petugas/(:num)', 'PemantauKab\MonitoringTitikController::getPetugas/$1');
         $routes->get('get-data', 'PemantauKab\MonitoringTitikController::getData');
         $routes->get('download-dokumentasi', 'PemantauKab\MonitoringTitikController::downloadDokumentasi');
+        $routes->get('foto', 'PemantauKab\MonitoringTitikController::fotoAktivitas');
     });
 
 

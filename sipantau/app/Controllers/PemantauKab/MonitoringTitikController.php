@@ -134,10 +134,10 @@ class MonitoringTitikController extends BaseController
         $user = $this->userModel->find($sobatId);
         $idKabupaten = $user['id_kabupaten'] ?? null;
 
-        // Get Titik Transaksi
+        // Get Titik Transaksi (sipantau_transaksi) & Lapor Aktivitas (pantau_progress)
         if ($idPCL === 'all') {
-            $points = $this->db->table('sipantau_transaksi st')
-                ->select('st.*, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+            $pointsTransaksi = $this->db->table('sipantau_transaksi st')
+                ->select('st.id_sipantau_transaksi, st.id_pcl, st.resume, st.latitude, st.longitude, st.id_kecamatan, st.id_desa, st.imagepath, st.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
                 ->join('master_kecamatan mk', 'st.id_kecamatan = mk.id_kecamatan', 'left')
                 ->join('master_desa md', 'st.id_desa = md.id_desa', 'left')
                 ->join('pcl p', 'st.id_pcl = p.id_pcl')
@@ -146,22 +146,51 @@ class MonitoringTitikController extends BaseController
                 ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
                 ->where('st.id_kegiatan_detail_proses', $idProses)
                 ->where('kw.id_kabupaten', $idKabupaten)
-                ->orderBy('st.created_at', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $pointsProgress = $this->db->table('pantau_progress pp')
+                ->select('pp.id_pantau_progess as id_sipantau_transaksi, pp.id_pcl, pp.catatan_aktivitas as resume, pp.latitude, pp.longitude, pp.id_kecamatan, pp.id_desa, pp.foto_aktivitas as imagepath, pp.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+                ->join('master_kecamatan mk', 'pp.id_kecamatan = mk.id_kecamatan', 'left')
+                ->join('master_desa md', 'pp.id_desa = md.id_desa', 'left')
+                ->join('pcl p', 'pp.id_pcl = p.id_pcl')
+                ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
+                ->join('pml pml', 'p.id_pml = pml.id_pml')
+                ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                ->where('kw.id_kegiatan_detail_proses', $idProses)
+                ->where('kw.id_kabupaten', $idKabupaten)
                 ->get()
                 ->getResultArray();
         } else {
-            $points = $this->db->table('sipantau_transaksi st')
-                ->select('st.*, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+            $pointsTransaksi = $this->db->table('sipantau_transaksi st')
+                ->select('st.id_sipantau_transaksi, st.id_pcl, st.resume, st.latitude, st.longitude, st.id_kecamatan, st.id_desa, st.imagepath, st.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
                 ->join('master_kecamatan mk', 'st.id_kecamatan = mk.id_kecamatan', 'left')
                 ->join('master_desa md', 'st.id_desa = md.id_desa', 'left')
                 ->join('pcl p', 'st.id_pcl = p.id_pcl')
                 ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
                 ->where('st.id_pcl', $idPCL)
                 ->where('st.id_kegiatan_detail_proses', $idProses)
-                ->orderBy('st.created_at', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $pointsProgress = $this->db->table('pantau_progress pp')
+                ->select('pp.id_pantau_progess as id_sipantau_transaksi, pp.id_pcl, pp.catatan_aktivitas as resume, pp.latitude, pp.longitude, pp.id_kecamatan, pp.id_desa, pp.foto_aktivitas as imagepath, pp.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+                ->join('master_kecamatan mk', 'pp.id_kecamatan = mk.id_kecamatan', 'left')
+                ->join('master_desa md', 'pp.id_desa = md.id_desa', 'left')
+                ->join('pcl p', 'pp.id_pcl = p.id_pcl')
+                ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
+                ->join('pml pml', 'p.id_pml = pml.id_pml')
+                ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                ->where('pp.id_pcl', $idPCL)
+                ->where('kw.id_kegiatan_detail_proses', $idProses)
                 ->get()
                 ->getResultArray();
         }
+
+        $points = array_merge($pointsTransaksi, $pointsProgress);
+        usort($points, function ($a, $b) {
+            return strtotime($a['created_at']) <=> strtotime($b['created_at']);
+        });
 
         return $this->response->setJSON([
             'success' => true,
@@ -211,9 +240,10 @@ class MonitoringTitikController extends BaseController
                 ->getRowArray();
         }
 
+        // Get Titik Transaksi (sipantau_transaksi) & Lapor Aktivitas (pantau_progress)
         if ($idPCL === 'all') {
-            $points = $this->db->table('sipantau_transaksi st')
-                ->select('st.*, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+            $pointsTransaksi = $this->db->table('sipantau_transaksi st')
+                ->select('st.id_sipantau_transaksi, st.id_pcl, st.resume, st.latitude, st.longitude, st.id_kecamatan, st.id_desa, st.imagepath, st.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
                 ->join('master_kecamatan mk', 'st.id_kecamatan = mk.id_kecamatan', 'left')
                 ->join('master_desa md', 'st.id_desa = md.id_desa', 'left')
                 ->join('pcl p', 'st.id_pcl = p.id_pcl')
@@ -222,22 +252,51 @@ class MonitoringTitikController extends BaseController
                 ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
                 ->where('st.id_kegiatan_detail_proses', $idProses)
                 ->where('kw.id_kabupaten', $idKabupaten)
-                ->orderBy('st.created_at', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $pointsProgress = $this->db->table('pantau_progress pp')
+                ->select('pp.id_pantau_progess as id_sipantau_transaksi, pp.id_pcl, pp.catatan_aktivitas as resume, pp.latitude, pp.longitude, pp.id_kecamatan, pp.id_desa, pp.foto_aktivitas as imagepath, pp.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+                ->join('master_kecamatan mk', 'pp.id_kecamatan = mk.id_kecamatan', 'left')
+                ->join('master_desa md', 'pp.id_desa = md.id_desa', 'left')
+                ->join('pcl p', 'pp.id_pcl = p.id_pcl')
+                ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
+                ->join('pml pml', 'p.id_pml = pml.id_pml')
+                ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                ->where('kw.id_kegiatan_detail_proses', $idProses)
+                ->where('kw.id_kabupaten', $idKabupaten)
                 ->get()
                 ->getResultArray();
         } else {
-            $points = $this->db->table('sipantau_transaksi st')
-                ->select('st.*, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+            $pointsTransaksi = $this->db->table('sipantau_transaksi st')
+                ->select('st.id_sipantau_transaksi, st.id_pcl, st.resume, st.latitude, st.longitude, st.id_kecamatan, st.id_desa, st.imagepath, st.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
                 ->join('master_kecamatan mk', 'st.id_kecamatan = mk.id_kecamatan', 'left')
                 ->join('master_desa md', 'st.id_desa = md.id_desa', 'left')
                 ->join('pcl p', 'st.id_pcl = p.id_pcl')
                 ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
                 ->where('st.id_pcl', $idPCL)
                 ->where('st.id_kegiatan_detail_proses', $idProses)
-                ->orderBy('st.created_at', 'ASC')
+                ->get()
+                ->getResultArray();
+
+            $pointsProgress = $this->db->table('pantau_progress pp')
+                ->select('pp.id_pantau_progess as id_sipantau_transaksi, pp.id_pcl, pp.catatan_aktivitas as resume, pp.latitude, pp.longitude, pp.id_kecamatan, pp.id_desa, pp.foto_aktivitas as imagepath, pp.created_at, mk.nama_kecamatan, md.nama_desa, u.nama_user as nama_pcl')
+                ->join('master_kecamatan mk', 'pp.id_kecamatan = mk.id_kecamatan', 'left')
+                ->join('master_desa md', 'pp.id_desa = md.id_desa', 'left')
+                ->join('pcl p', 'pp.id_pcl = p.id_pcl')
+                ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
+                ->join('pml pml', 'p.id_pml = pml.id_pml')
+                ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                ->where('pp.id_pcl', $idPCL)
+                ->where('kw.id_kegiatan_detail_proses', $idProses)
                 ->get()
                 ->getResultArray();
         }
+
+        $points = array_merge($pointsTransaksi, $pointsProgress);
+        usort($points, function ($a, $b) {
+            return strtotime($a['created_at']) <=> strtotime($b['created_at']);
+        });
 
         if (empty($points)) {
             return redirect()->back()->with('error', 'Tidak ada data dokumentasi untuk diunduh');
@@ -283,11 +342,23 @@ class MonitoringTitikController extends BaseController
             $sheet->setCellValue('D' . $row, $point['nama_kecamatan']);
             $sheet->setCellValue('E' . $row, $point['nama_desa']);
             $sheet->setCellValue('F' . $row, $point['resume']);
-            $sheet->setCellValue('G' . $row, $point['latitude'] . ', ' . $point['longitude']);
+            
+            if ($point['latitude'] !== null && $point['latitude'] !== '' && $point['longitude'] !== null && $point['longitude'] !== '') {
+                $sheet->setCellValue('G' . $row, $point['latitude'] . ', ' . $point['longitude']);
+            } else {
+                $sheet->setCellValue('G' . $row, '-');
+            }
             
             if ($point['imagepath']) {
-                $sheet->setCellValue('H' . $row, base_url($point['imagepath']));
-                $sheet->getCell('H' . $row)->getHyperlink()->setUrl(base_url($point['imagepath']));
+                if (str_starts_with($point['imagepath'], 'lapor_aktivitas/')) {
+                    $uri = service('request')->getUri();
+                    $group = str_contains($uri->getPath(), 'adminsurvei-kab') ? 'adminsurvei-kab' : 'pemantau-kabupaten';
+                    $imageUrl = base_url($group . '/monitoring-titik/foto?path=' . urlencode($point['imagepath']));
+                } else {
+                    $imageUrl = base_url($point['imagepath']);
+                }
+                $sheet->setCellValue('H' . $row, $imageUrl);
+                $sheet->getCell('H' . $row)->getHyperlink()->setUrl($imageUrl);
             } else {
                 $sheet->setCellValue('H' . $row, '-');
             }
@@ -311,5 +382,30 @@ class MonitoringTitikController extends BaseController
         $writer = new Xlsx($spreadsheet);
         $writer->save('php://output');
         exit;
+    }
+
+    public function fotoAktivitas()
+    {
+        $sobatId = session()->get('sobat_id');
+        if (!$sobatId) return redirect()->to('/login');
+
+        $relativePath = $this->request->getGet('path');
+        if (empty($relativePath)) {
+            return $this->response->setStatusCode(400)->setBody('Path parameter is required');
+        }
+
+        // Prevent directory traversal
+        $relativePath = str_replace(['../', '..\\'], '', $relativePath);
+        $path = WRITEPATH . 'uploads/' . $relativePath;
+
+        if (!file_exists($path) || is_dir($path)) {
+            return $this->response->setStatusCode(404)->setBody('File not found');
+        }
+
+        $mime = mime_content_type($path);
+        return $this->response
+            ->setHeader('Content-Type', $mime)
+            ->setHeader('Content-Length', filesize($path))
+            ->setBody(file_get_contents($path));
     }
 }

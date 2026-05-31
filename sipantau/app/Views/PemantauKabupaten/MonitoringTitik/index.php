@@ -269,9 +269,18 @@
             if (points.length > 0) {
                 points.forEach(point => {
                     if (point.latitude && point.longitude) {
+                        let imgUrl = '';
+                        if (point.imagepath) {
+                            if (point.imagepath.startsWith('lapor_aktivitas/')) {
+                                imgUrl = `${apiBase}/foto?path=${encodeURIComponent(point.imagepath)}`;
+                            } else {
+                                imgUrl = `<?= base_url() ?>/${point.imagepath}`;
+                            }
+                        }
+
                         const popupContent = `
                             <div class="bg-white">
-                                ${point.imagepath ? `<img src="<?= base_url() ?>/${point.imagepath}" class="w-full h-40 object-cover border-b" onerror="this.src='<?= base_url('assets/gambar/no-image.png') ?>'">` : '<div class="h-40 bg-gray-100 flex items-center justify-center border-b"><i class="fas fa-image text-gray-300 text-3xl"></i></div>'}
+                                ${point.imagepath ? `<img src="${imgUrl}" class="w-full h-40 object-cover border-b" onerror="this.src='<?= base_url('assets/gambar/no-image.png') ?>'">` : '<div class="h-40 bg-gray-100 flex items-center justify-center border-b"><i class="fas fa-image text-gray-300 text-3xl"></i></div>'}
                                 <div class="p-3">
                                     <p class="text-xs text-gray-500 mb-1 font-semibold">${formatDateTime(point.created_at)}</p>
                                     <p class="text-sm font-bold text-gray-800 mb-1">${point.nama_kecamatan}, ${point.nama_desa}</p>
