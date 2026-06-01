@@ -15,6 +15,7 @@ class SipantauTransaksiModel extends Model
     protected $allowedFields    = [
         'id_sipantau_transaksi',
         'id_pcl',
+        'id_pml',
         'id_kegiatan_detail_proses',
         'resume',
         'latitude',
