@@ -609,6 +609,11 @@ class LoginController extends BaseController
         // Destroy session lokal
         $session->destroy();
 
+        // Jika berjalan di localhost / development, langsung redirect ke halaman login lokal untuk menghindari WAF block SSO BPS
+        if (str_contains(base_url(), 'localhost') || str_contains(base_url(), '127.0.0.1') || ENVIRONMENT === 'development') {
+            return redirect()->to(base_url('login'));
+        }
+
         // Redirect ke logout SSO
         $sso = new \App\Libraries\SSOLibrary();
 

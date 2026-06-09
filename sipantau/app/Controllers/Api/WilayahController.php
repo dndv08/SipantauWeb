@@ -90,4 +90,58 @@ class WilayahController extends BaseController
             return $this->failUnauthorized('Token tidak valid: ' . $e->getMessage());
         }
     }
+
+    public function getSls()
+    {
+        $authHeader = $this->request->getHeaderLine('Authorization');
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return $this->failUnauthorized('Token tidak ditemukan');
+        }
+
+        try {
+            $decoded = JWT::decode($matches[1], new Key($this->jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return $this->failUnauthorized('Token tidak valid: ' . $e->getMessage());
+        }
+
+        $idDesa = $this->request->getGet('id_desa');
+        if (empty($idDesa)) {
+            return $this->failValidationErrors('id_desa wajib diisi');
+        }
+
+        $slsModel = new \App\Models\MasterSLSModel();
+        $data = $slsModel->where('id_desa', $idDesa)->orderBy('nama_sls', 'ASC')->findAll();
+
+        return $this->respond([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
+
+    public function getSubSls()
+    {
+        $authHeader = $this->request->getHeaderLine('Authorization');
+        if (!$authHeader || !preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            return $this->failUnauthorized('Token tidak ditemukan');
+        }
+
+        try {
+            $decoded = JWT::decode($matches[1], new Key($this->jwtKey, 'HS256'));
+        } catch (\Exception $e) {
+            return $this->failUnauthorized('Token tidak valid: ' . $e->getMessage());
+        }
+
+        $idSls = $this->request->getGet('id_sls');
+        if (empty($idSls)) {
+            return $this->failValidationErrors('id_sls wajib diisi');
+        }
+
+        $subSlsModel = new \App\Models\MasterSubSLSModel();
+        $data = $subSlsModel->where('id_sls', $idSls)->orderBy('id_sub_sls', 'ASC')->findAll();
+
+        return $this->respond([
+            'status' => 'success',
+            'data' => $data
+        ]);
+    }
 }

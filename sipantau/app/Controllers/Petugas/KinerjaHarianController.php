@@ -15,7 +15,7 @@ class KinerjaHarianController extends BaseController
 
         // 1. Kegiatan PCL saya (jika user adalah PCL)
         $myPCLList = $db->table('pcl p')
-            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pcl = p.id_pcl) as realisasi_kumulatif')
             ->join('pml', 'p.id_pml = pml.id_pml')
             ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
@@ -28,7 +28,7 @@ class KinerjaHarianController extends BaseController
 
         // 2. Kegiatan PML saya (jika user adalah PML)
         $myPMLList = $db->table('pml p')
-            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pml = p.id_pml) as realisasi_kumulatif')
             ->join('kegiatan_wilayah kw', 'p.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
             ->join('master_kegiatan_detail_proses mkdp', 'kw.id_kegiatan_detail_proses = mkdp.id_kegiatan_detail_proses')
@@ -40,7 +40,7 @@ class KinerjaHarianController extends BaseController
 
         // 3. Kegiatan PCL yang diawasi (jika user adalah PML)
         $supervisedPCLList = $db->table('pcl p')
-            ->select('p.id_pcl, p.target, u.nama_user as nama_pcl, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pcl, p.target, u.nama_user as nama_pcl, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pcl = p.id_pcl) as realisasi_kumulatif')
             ->join('pml', 'p.id_pml = pml.id_pml')
             ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
@@ -59,6 +59,7 @@ class KinerjaHarianController extends BaseController
                 'target' => $k['target'],
                 'nama_kegiatan_detail_proses' => '[PCL] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
@@ -69,6 +70,7 @@ class KinerjaHarianController extends BaseController
                 'target' => $k['target'],
                 'nama_kegiatan_detail_proses' => '[Saya - PML] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
@@ -79,6 +81,7 @@ class KinerjaHarianController extends BaseController
                 'target' => $k['target'],
                 'nama_kegiatan_detail_proses' => '[PCL ' . $k['nama_pcl'] . '] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];

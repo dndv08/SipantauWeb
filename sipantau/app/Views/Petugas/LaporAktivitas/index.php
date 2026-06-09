@@ -129,12 +129,33 @@
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     <option value="">-- Pilih Kegiatan --</option>
-                    <?php foreach ($kegiatanList as $k): ?>
-                    <option value="<?= $k['id_pcl'] ?>"
-                            data-target="<?= esc($k['target'] ?? 0) ?>"
-                            data-kumulatif="<?= esc($k['realisasi_kumulatif'] ?? 0) ?>">
-                        <?= esc($k['nama_kegiatan_detail_proses']) ?>
-                    </option>
+                    <?php 
+                    // Group kegiatan by nama_kegiatan for optgroup
+                    $grouped = [];
+                    foreach ($kegiatanList as $k) {
+                        $groupName = $k['nama_kegiatan'] ?? 'Lainnya';
+                        $grouped[$groupName][] = $k;
+                    }
+                    foreach ($grouped as $groupName => $items): ?>
+                    <optgroup label="<?= esc($groupName) ?>">
+                        <?php foreach ($items as $k): 
+                            $labelParts = [];
+                            $labelParts[] = $k['nama_kegiatan_detail_proses'];
+                            if (!empty($k['nama_kegiatan_detail']) && $k['nama_kegiatan_detail'] !== $k['nama_kegiatan_detail_proses']) {
+                                $labelParts[] = '(' . $k['nama_kegiatan_detail'] . ')';
+                            }
+                            if (!empty($k['tanggal_mulai']) && !empty($k['tanggal_selesai'])) {
+                                $labelParts[] = '• ' . date('d/m/Y', strtotime($k['tanggal_mulai'])) . ' - ' . date('d/m/Y', strtotime($k['tanggal_selesai']));
+                            }
+                            $label = implode(' ', $labelParts);
+                        ?>
+                        <option value="<?= $k['id_pcl'] ?>"
+                                data-target="<?= esc($k['target'] ?? 0) ?>"
+                                data-kumulatif="<?= esc($k['realisasi_kumulatif'] ?? 0) ?>">
+                            <?= esc($label) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </optgroup>
                     <?php endforeach; ?>
                 </select>
             </div>

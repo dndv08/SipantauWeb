@@ -468,6 +468,8 @@ $routes->group('api', [
     $routes->get('achievement/leaderboard', 'AchievementLeaderboardController::index');
     $routes->delete('achievement/reset/(:num)', 'AchievementResetController::resetUser/$1');
     $routes->get('wilayah/', 'WilayahController::loadAll');
+    $routes->get('wilayah/sls', 'WilayahController::getSls');
+    $routes->get('wilayah/subsls', 'WilayahController::getSubSls');
 
 });
 

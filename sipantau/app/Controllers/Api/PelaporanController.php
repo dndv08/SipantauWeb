@@ -54,9 +54,9 @@ class PelaporanController extends BaseController
                     kec.nama_kecamatan,
                     des.nama_desa
                 ")
-                ->join('pcl', 'pcl.id_pcl = sipantau_transaksi.id_pcl')
-                ->join('pml', 'pml.id_pml = pcl.id_pml')
-                ->join('kegiatan_wilayah kw', 'kw.id_kegiatan_wilayah = pml.id_kegiatan_wilayah')
+                ->join('pcl', 'pcl.id_pcl = sipantau_transaksi.id_pcl', 'left')
+                ->join('pml', 'pml.id_pml = COALESCE(pcl.id_pml, sipantau_transaksi.id_pml)', 'left')
+                ->join('kegiatan_wilayah kw', 'kw.id_kegiatan_wilayah = pml.id_kegiatan_wilayah', 'left')
                 ->join('master_kegiatan_detail_proses mkdp', 'mkdp.id_kegiatan_detail_proses = sipantau_transaksi.id_kegiatan_detail_proses')
                 ->join('master_kegiatan_detail mkd', 'mkd.id_kegiatan_detail = mkdp.id_kegiatan_detail')
                 ->join('master_kegiatan mk', 'mk.id_kegiatan = mkd.id_kegiatan')
@@ -69,6 +69,11 @@ class PelaporanController extends BaseController
             $filterIdPcl = $this->request->getGet('id_pcl');
             if (!empty($filterIdPcl)) {
                 $builder->where('sipantau_transaksi.id_pcl', $filterIdPcl);
+            }
+
+            $filterIdPml = $this->request->getGet('id_pml');
+            if (!empty($filterIdPml)) {
+                $builder->where('sipantau_transaksi.id_pml', $filterIdPml);
             }
 
             $laporan = $builder->findAll();
@@ -114,20 +119,37 @@ class PelaporanController extends BaseController
             $data = $this->request->getPost();
             $image = $this->request->getFile('image');
 
+            $idPcl = $data['id_pcl'] ?? null;
+            $idPml = $data['id_pml'] ?? null;
+
             // 🧩 Validasi input wajib
-            if (empty($data['id_pcl']) || empty($data['id_kegiatan_detail_proses']) || empty($data['resume'])) {
-                return $this->failValidationErrors('id_pcl, kegiatan, dan resume wajib diisi.');
+            if ((empty($idPcl) && empty($idPml)) || empty($data['id_kegiatan_detail_proses']) || empty($data['resume'])) {
+                return $this->failValidationErrors('id_pcl atau id_pml, kegiatan, dan resume wajib diisi.');
             }
 
-            // 🔎 Verifikasi id_pcl milik user login
-            $pclModel = new \App\Models\PCLModel();
-            $pcl = $pclModel
-                ->where('id_pcl', $data['id_pcl'])
-                ->where('sobat_id', $sobat_id)
-                ->first();
+            // 🔎 Verifikasi kepemilikan
+            if (!empty($idPcl)) {
+                $pclModel = new \App\Models\PCLModel();
+                $pcl = $pclModel
+                    ->where('id_pcl', $idPcl)
+                    ->where('sobat_id', $sobat_id)
+                    ->first();
 
-            if (!$pcl) {
-                return $this->failUnauthorized('id_pcl tidak valid atau bukan milik user ini.');
+                if (!$pcl) {
+                    return $this->failUnauthorized('id_pcl tidak valid atau bukan milik user ini.');
+                }
+            }
+
+            if (!empty($idPml)) {
+                $pmlModel = new \App\Models\PMLModel();
+                $pml = $pmlModel
+                    ->where('id_pml', $idPml)
+                    ->where('sobat_id', $sobat_id)
+                    ->first();
+
+                if (!$pml) {
+                    return $this->failUnauthorized('id_pml tidak valid atau bukan milik user ini.');
+                }
             }
 
             // 📸 Proses upload gambar (OPTIMIZED)
@@ -175,13 +197,16 @@ class PelaporanController extends BaseController
             // 💾 Simpan data ke database
             $transaksiModel = new \App\Models\SipantauTransaksiModel();
             $insertData = [
-                'id_pcl' => $data['id_pcl'],
+                'id_pcl' => !empty($idPcl) ? $idPcl : null,
+                'id_pml' => !empty($idPml) ? $idPml : null,
                 'id_kegiatan_detail_proses' => $data['id_kegiatan_detail_proses'],
                 'resume' => $data['resume'],
                 'latitude' => $data['latitude'] ?? null,
                 'longitude' => $data['longitude'] ?? null,
                 'id_kecamatan' => $data['id_kecamatan'] ?? null,
                 'id_desa' => $data['id_desa'] ?? null,
+                'id_sls' => $data['id_sls'] ?? null,
+                'id_subsls' => $data['id_subsls'] ?? null,
                 'imagepath' => $imagePath,
                 'created_at' => !empty($data['created_at']) ? $data['created_at'] : date('Y-m-d H:i:s')
             ];

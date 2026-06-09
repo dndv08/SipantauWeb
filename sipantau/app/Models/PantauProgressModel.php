@@ -15,6 +15,7 @@ class PantauProgressModel extends Model
     protected $allowedFields    = [
         'id_pantau_progess',
         'id_pcl',
+        'id_pml',
         'jumlah_realisasi_absolut',
         'jumlah_realisasi_kumulatif',
         'catatan_aktivitas',

@@ -15,7 +15,7 @@ class PantauProgressController extends BaseController
 
         // 1. Kegiatan PCL saya (jika user adalah PCL)
         $myPCLList = $db->table('pcl p')
-            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pcl = p.id_pcl) as realisasi_kumulatif')
             ->join('pml', 'p.id_pml = pml.id_pml')
             ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
@@ -28,7 +28,7 @@ class PantauProgressController extends BaseController
 
         // 2. Kegiatan PML saya (jika user adalah PML)
         $myPMLList = $db->table('pml p')
-            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pml = p.id_pml) as realisasi_kumulatif')
             ->join('kegiatan_wilayah kw', 'p.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
             ->join('master_kegiatan_detail_proses mkdp', 'kw.id_kegiatan_detail_proses = mkdp.id_kegiatan_detail_proses')
@@ -40,7 +40,7 @@ class PantauProgressController extends BaseController
 
         // 3. Kegiatan PCL yang diawasi (jika user adalah PML)
         $supervisedPCLList = $db->table('pcl p')
-            ->select('p.id_pcl, p.target, u.nama_user as nama_pcl, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
+            ->select('p.id_pcl, p.target, u.nama_user as nama_pcl, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pcl = p.id_pcl) as realisasi_kumulatif')
             ->join('pml', 'p.id_pml = pml.id_pml')
             ->join('sipantau_user u', 'p.sobat_id = u.sobat_id')
@@ -60,6 +60,7 @@ class PantauProgressController extends BaseController
                 'realisasi_kumulatif' => $k['realisasi_kumulatif'],
                 'nama_kegiatan_detail_proses' => '[PCL] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
@@ -71,6 +72,7 @@ class PantauProgressController extends BaseController
                 'realisasi_kumulatif' => $k['realisasi_kumulatif'],
                 'nama_kegiatan_detail_proses' => '[Saya - PML] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
@@ -82,6 +84,7 @@ class PantauProgressController extends BaseController
                 'realisasi_kumulatif' => $k['realisasi_kumulatif'],
                 'nama_kegiatan_detail_proses' => '[PCL ' . $k['nama_pcl'] . '] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
                 'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
@@ -105,7 +108,7 @@ class PantauProgressController extends BaseController
 
             if ($idPCL) {
                 $originalTarget = $db->table('kurva_petugas')
-                    ->select('tanggal_target, target_kumulatif_absolut, target_persen_kumulatif')
+                    ->select('tanggal_target, target_kumulatif_absolut')
                     ->where('id_pcl', $idPCL)
                     ->orderBy('tanggal_target', 'ASC')
                     ->get()->getResultArray();
@@ -117,51 +120,74 @@ class PantauProgressController extends BaseController
                     ->orderBy('DATE(created_at)', 'ASC')
                     ->get()->getResultArray();
 
-                $unifiedDates = [];
+                // Get PCL target value
+                $pclRow = $db->table('pcl p')
+                    ->select('p.target, mkdp.tanggal_mulai, mkdp.tanggal_selesai')
+                    ->join('pml', 'p.id_pml = pml.id_pml')
+                    ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                    ->join('master_kegiatan_detail_proses mkdp', 'kw.id_kegiatan_detail_proses = mkdp.id_kegiatan_detail_proses')
+                    ->where('p.id_pcl', $idPCL)
+                    ->get()->getRowArray();
+                $pclTargetVal = (int)($pclRow['target'] ?? 0);
+                $startStr = $pclRow['tanggal_mulai'] ?? date('Y-m-d');
+                $endStr   = $pclRow['tanggal_selesai'] ?? date('Y-m-d');
+
+                // Build lookup maps
+                $targetByDate = [];
                 foreach ($originalTarget as $ot) {
-                    $unifiedDates[$ot['tanggal_target']] = [
-                        'tanggal_target' => $ot['tanggal_target'],
-                        'target_kumulatif_absolut' => (int)$ot['target_kumulatif_absolut'],
-                        'target_persen_kumulatif' => (float)$ot['target_persen_kumulatif'],
-                    ];
+                    $targetByDate[$ot['tanggal_target']] = (int)$ot['target_kumulatif_absolut'];
                 }
-
-                $lastTargetKum = 0;
-                if (!empty($originalTarget)) {
-                    $lastTarget = end($originalTarget);
-                    $lastTargetKum = (int)$lastTarget['target_kumulatif_absolut'];
-                }
-
+                $realisasiByDate = [];
                 foreach ($realisasi as $r) {
-                    $tgl = $r['tanggal'];
-                    if (!isset($unifiedDates[$tgl])) {
-                        $unifiedDates[$tgl] = [
-                            'tanggal_target' => $tgl,
-                            'target_kumulatif_absolut' => $lastTargetKum,
-                            'target_persen_kumulatif' => 100.0,
-                        ];
-                    }
+                    $realisasiByDate[$r['tanggal']] = (int)$r['kumulatif'];
                 }
 
-                ksort($unifiedDates);
-                $kurvaTarget = array_values($unifiedDates);
-
-                $realisasiMap = [];
-                foreach ($realisasi as $r) {
-                    $realisasiMap[$r['tanggal']] = (int)$r['kumulatif'];
+                $firstDate = !empty($originalTarget) ? $originalTarget[0]['tanggal_target'] : $startStr;
+                $lastTargetKum = !empty($originalTarget) ? (int)end($originalTarget)['target_kumulatif_absolut'] : $pclTargetVal;
+                
+                $today = date('Y-m-d');
+                $lastRealisasiDate = !empty($realisasi) ? end($realisasi)['tanggal'] : $firstDate;
+                
+                if ($today <= $endStr) {
+                    $endDateVal = $endStr;
+                } else {
+                    $endDateVal = max($endStr, $lastRealisasiDate);
                 }
 
+                // Generate full daily timeline
+                $kurvaTarget    = [];
                 $kurvaRealisasi = [];
-                $runningKum = 0;
-                foreach ($kurvaTarget as $kt) {
-                    $tgl = $kt['tanggal_target'];
-                    if (isset($realisasiMap[$tgl])) {
-                        $runningKum = $realisasiMap[$tgl];
+                $runningTargetKum    = 0;
+                $runningRealisasiKum = 0;
+                $current = new \DateTime($firstDate);
+                $endDt   = new \DateTime($endDateVal);
+
+                while ($current <= $endDt) {
+                    $tgl = $current->format('Y-m-d');
+
+                    if (isset($targetByDate[$tgl])) {
+                        $runningTargetKum = $targetByDate[$tgl];
+                    } elseif (!empty($targetByDate) && $tgl > array_key_last($targetByDate)) {
+                        $runningTargetKum = $lastTargetKum;
                     }
-                    $kurvaRealisasi[] = [
-                        'tanggal' => $tgl,
-                        'kumulatif' => $runningKum,
+
+                    if (isset($realisasiByDate[$tgl])) {
+                        $runningRealisasiKum = $realisasiByDate[$tgl];
+                    }
+
+                    $kurvaTarget[] = [
+                        'tanggal_target'           => $tgl,
+                        'target_kumulatif_absolut' => $runningTargetKum,
+                        'target_persen_kumulatif'  => $pclTargetVal > 0
+                            ? round(($runningTargetKum / $pclTargetVal) * 100, 2)
+                            : 0.0,
                     ];
+                    $kurvaRealisasi[] = [
+                        'tanggal'   => $tgl,
+                        'kumulatif' => $runningRealisasiKum,
+                    ];
+
+                    $current->modify('+1 day');
                 }
             } elseif ($idPML) {
                 $pmlKegiatan = $db->table('pml p')
@@ -173,61 +199,44 @@ class PantauProgressController extends BaseController
 
                 if ($pmlKegiatan) {
                     $totalTarget = (int)$pmlKegiatan['target'];
-                    $startDate = new \DateTime($pmlKegiatan['tanggal_mulai']);
-                    $endDate = new \DateTime($pmlKegiatan['tanggal_selesai']);
-                    
-                    $diff = $startDate->diff($endDate)->days;
-                    if ($diff < 0) $diff = 0;
-                    if ($diff > 365) $diff = 365;
+                    $startDt     = new \DateTime($pmlKegiatan['tanggal_mulai']);
+                    $endDt       = new \DateTime($pmlKegiatan['tanggal_selesai']);
+                    $todayStr    = date('Y-m-d');
+                    $endStr      = $pmlKegiatan['tanggal_selesai'];
 
-                    $dates = [];
+                    // Count work days for target distribution
+                    $diffDays = $startDt->diff($endDt)->days;
+                    if ($diffDays < 0) $diffDays = 0;
+                    if ($diffDays > 365) $diffDays = 365;
+
                     $workDaysCount = 0;
-                    for ($i = 0; $i <= $diff; $i++) {
-                        $currentDate = clone $startDate;
-                        $currentDate->modify("+$i days");
-                        $tglStr = $currentDate->format('Y-m-d');
-                        $dayOfWeek = (int)$currentDate->format('w');
-                        $isWorkDay = ($dayOfWeek !== 0 && $dayOfWeek !== 6) ? 1 : 0;
-                        
-                        $dates[$tglStr] = [
-                            'tanggal_target' => $tglStr,
-                            'is_hari_kerja' => $isWorkDay,
-                            'target_harian_absolut' => 0,
-                            'target_kumulatif_absolut' => 0,
-                            'target_persen_kumulatif' => 0.0,
-                        ];
-                        if ($isWorkDay) {
-                            $workDaysCount++;
-                        }
+                    for ($i = 0; $i <= $diffDays; $i++) {
+                        $d = clone $startDt;
+                        $d->modify("+$i days");
+                        $dow = (int)$d->format('w');
+                        if ($dow !== 0 && $dow !== 6) $workDaysCount++;
                     }
-                    if ($workDaysCount === 0) {
-                        $workDaysCount = count($dates);
-                        foreach ($dates as &$d) {
-                            $d['is_hari_kerja'] = 1;
-                        }
-                    }
+                    if ($workDaysCount === 0) $workDaysCount = $diffDays + 1;
 
-                    $baseTargetPerDay = floor($totalTarget / $workDaysCount);
-                    $remainder = $totalTarget % $workDaysCount;
+                    $basePerDay = $totalTarget > 0 ? floor($totalTarget / $workDaysCount) : 0;
+                    $rem        = $totalTarget > 0 ? ($totalTarget % $workDaysCount) : 0;
 
-                    $currentKumulatif = 0;
-                    $originalTarget = [];
-                    foreach ($dates as $tgl => $d) {
-                        $dTarget = 0;
-                        if ($d['is_hari_kerja']) {
-                            $dTarget = $baseTargetPerDay;
-                            if ($remainder > 0) {
-                                $dTarget += 1;
-                                $remainder--;
-                            }
+                    // Build daily target lookup
+                    $targetByDate = [];
+                    $runningT = 0;
+                    for ($i = 0; $i <= $diffDays; $i++) {
+                        $d = clone $startDt;
+                        $d->modify("+$i days");
+                        $tgl = $d->format('Y-m-d');
+                        $dow = (int)$d->format('w');
+                        $isWork = ($dow !== 0 && $dow !== 6);
+                        $dayTarget = 0;
+                        if ($isWork) {
+                            $dayTarget = $basePerDay;
+                            if ($rem > 0) { $dayTarget++; $rem--; }
                         }
-                        $currentKumulatif += $dTarget;
-                        
-                        $originalTarget[] = [
-                            'tanggal_target' => $tgl,
-                            'target_kumulatif_absolut' => $currentKumulatif,
-                            'target_persen_kumulatif' => $totalTarget > 0 ? round(($currentKumulatif / $totalTarget) * 100, 2) : 0.0,
-                        ];
+                        $runningT += $dayTarget;
+                        $targetByDate[$tgl] = $runningT;
                     }
 
                     $realisasi = $db->table('pantau_progress')
@@ -237,45 +246,52 @@ class PantauProgressController extends BaseController
                         ->orderBy('DATE(created_at)', 'ASC')
                         ->get()->getResultArray();
 
-                    $unifiedDates = [];
-                    foreach ($originalTarget as $ot) {
-                        $unifiedDates[$ot['tanggal_target']] = [
-                            'tanggal_target' => $ot['tanggal_target'],
-                            'target_kumulatif_absolut' => (int)$ot['target_kumulatif_absolut'],
-                            'target_persen_kumulatif' => (float)$ot['target_persen_kumulatif'],
-                        ];
-                    }
-
+                    $realisasiByDate = [];
                     foreach ($realisasi as $r) {
-                        $tgl = $r['tanggal'];
-                        if (!isset($unifiedDates[$tgl])) {
-                            $unifiedDates[$tgl] = [
-                                'tanggal_target' => $tgl,
-                                'target_kumulatif_absolut' => $totalTarget,
-                                'target_persen_kumulatif' => 100.0,
-                            ];
-                        }
+                        $realisasiByDate[$r['tanggal']] = (int)$r['kumulatif'];
                     }
 
-                    ksort($unifiedDates);
-                    $kurvaTarget = array_values($unifiedDates);
-
-                    $realisasiMap = [];
-                    foreach ($realisasi as $r) {
-                        $realisasiMap[$r['tanggal']] = (int)$r['kumulatif'];
+                    $lastRealisasiDate = !empty($realisasi) ? end($realisasi)['tanggal'] : $pmlKegiatan['tanggal_mulai'];
+                    if ($todayStr <= $endStr) {
+                        $chartEndVal = $endStr;
+                    } else {
+                        $chartEndVal = max($endStr, $lastRealisasiDate);
                     }
+                    $chartEnd = new \DateTime($chartEndVal);
 
+                    // Generate full daily timeline
+                    $kurvaTarget    = [];
                     $kurvaRealisasi = [];
-                    $runningKum = 0;
-                    foreach ($kurvaTarget as $kt) {
-                        $tgl = $kt['tanggal_target'];
-                        if (isset($realisasiMap[$tgl])) {
-                            $runningKum = $realisasiMap[$tgl];
+                    $runningTargetKum    = 0;
+                    $runningRealisasiKum = 0;
+                    $current = clone $startDt;
+
+                    while ($current <= $chartEnd) {
+                        $tgl = $current->format('Y-m-d');
+
+                        if (isset($targetByDate[$tgl])) {
+                            $runningTargetKum = $targetByDate[$tgl];
+                        } elseif (!empty($targetByDate) && $tgl > array_key_last($targetByDate)) {
+                            $runningTargetKum = $totalTarget;
                         }
-                        $kurvaRealisasi[] = [
-                            'tanggal' => $tgl,
-                            'kumulatif' => $runningKum,
+
+                        if (isset($realisasiByDate[$tgl])) {
+                            $runningRealisasiKum = $realisasiByDate[$tgl];
+                        }
+
+                        $kurvaTarget[] = [
+                            'tanggal_target'           => $tgl,
+                            'target_kumulatif_absolut' => $runningTargetKum,
+                            'target_persen_kumulatif'  => $totalTarget > 0
+                                ? round(($runningTargetKum / $totalTarget) * 100, 2)
+                                : 0.0,
                         ];
+                        $kurvaRealisasi[] = [
+                            'tanggal'   => $tgl,
+                            'kumulatif' => $runningRealisasiKum,
+                        ];
+
+                        $current->modify('+1 day');
                     }
                 }
             }
@@ -310,7 +326,10 @@ class PantauProgressController extends BaseController
         if ($idPCL) {
             // Cek kepemilikan PCL
             $pcl = $db->table('pcl p')
-                ->select('p.id_pcl, p.target')
+                ->select('p.id_pcl, p.target, mkdp.tanggal_mulai, mkdp.tanggal_selesai')
+                ->join('pml', 'p.id_pml = pml.id_pml')
+                ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
+                ->join('master_kegiatan_detail_proses mkdp', 'kw.id_kegiatan_detail_proses = mkdp.id_kegiatan_detail_proses')
                 ->where('p.id_pcl', $idPCL)
                 ->groupStart()
                     ->where('p.sobat_id', $sobatId)
@@ -328,7 +347,7 @@ class PantauProgressController extends BaseController
             }
 
             $originalTarget = $db->table('kurva_petugas')
-                ->select('tanggal_target, target_kumulatif_absolut, target_persen_kumulatif')
+                ->select('tanggal_target, target_kumulatif_absolut')
                 ->where('id_pcl', $idPCL)
                 ->orderBy('tanggal_target', 'ASC')
                 ->get()->getResultArray();
@@ -340,58 +359,82 @@ class PantauProgressController extends BaseController
                 ->orderBy('DATE(created_at)', 'ASC')
                 ->get()->getResultArray();
 
-            $unifiedDates = [];
+            // Build lookup maps
+            $targetByDate = [];
             foreach ($originalTarget as $ot) {
-                $unifiedDates[$ot['tanggal_target']] = [
-                    'tanggal_target' => $ot['tanggal_target'],
-                    'target_kumulatif_absolut' => (int)$ot['target_kumulatif_absolut'],
-                    'target_persen_kumulatif' => (float)$ot['target_persen_kumulatif'],
-                ];
+                $targetByDate[$ot['tanggal_target']] = (int)$ot['target_kumulatif_absolut'];
             }
-
-            $lastTargetKum = 0;
-            if (!empty($originalTarget)) {
-                $lastTarget = end($originalTarget);
-                $lastTargetKum = (int)$lastTarget['target_kumulatif_absolut'];
-            }
-
+            $realisasiByDate = [];
             foreach ($realisasi as $r) {
-                $tgl = $r['tanggal'];
-                if (!isset($unifiedDates[$tgl])) {
-                    $unifiedDates[$tgl] = [
-                        'tanggal_target' => $tgl,
-                        'target_kumulatif_absolut' => $lastTargetKum,
-                        'target_persen_kumulatif' => 100.0,
-                    ];
-                }
+                $realisasiByDate[$r['tanggal']] = (int)$r['kumulatif'];
             }
 
-            ksort($unifiedDates);
-            $kurvaTarget = array_values($unifiedDates);
-
-            $realisasiMap = [];
-            foreach ($realisasi as $r) {
-                $realisasiMap[$r['tanggal']] = (int)$r['kumulatif'];
+            // Determine date range
+            $firstDate = !empty($originalTarget) ? $originalTarget[0]['tanggal_target'] : $pcl['tanggal_mulai'];
+            $lastTargetKum = !empty($originalTarget) ? (int)end($originalTarget)['target_kumulatif_absolut'] : $pcl['target'];
+            
+            $today = date('Y-m-d');
+            $tanggalSelesai = $pcl['tanggal_selesai'];
+            $lastRealisasiDate = !empty($realisasi) ? end($realisasi)['tanggal'] : $firstDate;
+            
+            if ($today <= $tanggalSelesai) {
+                $endDate = $tanggalSelesai;
+            } else {
+                $endDate = max($tanggalSelesai, $lastRealisasiDate);
             }
 
+            // Generate full daily timeline
+            $kurvaTarget   = [];
             $kurvaRealisasi = [];
-            $runningKum = 0;
-            foreach ($kurvaTarget as $kt) {
-                $tgl = $kt['tanggal_target'];
-                if (isset($realisasiMap[$tgl])) {
-                    $runningKum = $realisasiMap[$tgl];
+            $runningTargetKum   = 0;
+            $runningRealisasiKum = 0;
+            $current = new \DateTime($firstDate);
+            $end     = new \DateTime($endDate);
+
+            while ($current <= $end) {
+                $tgl = $current->format('Y-m-d');
+
+                // Target: use kurva if exists, else carry forward last known value
+                if (isset($targetByDate[$tgl])) {
+                    $runningTargetKum = $targetByDate[$tgl];
                 }
-                $kurvaRealisasi[] = [
-                    'tanggal' => $tgl,
-                    'kumulatif' => $runningKum,
+                // After the last target date, target stays at max
+                if ($tgl > array_key_last($targetByDate ?? []) && !empty($targetByDate)) {
+                    $runningTargetKum = $lastTargetKum;
+                }
+
+                // Realisasi: update on reported days, carry forward
+                if (isset($realisasiByDate[$tgl])) {
+                    $runningRealisasiKum = $realisasiByDate[$tgl];
+                }
+
+                $kurvaTarget[] = [
+                    'tanggal_target'           => $tgl,
+                    'target_kumulatif_absolut' => $runningTargetKum,
+                    'target_persen_kumulatif'  => $pcl['target'] > 0
+                        ? round(($runningTargetKum / $pcl['target']) * 100, 2)
+                        : 0.0,
                 ];
+                $kurvaRealisasi[] = [
+                    'tanggal'   => $tgl,
+                    'kumulatif' => $runningRealisasiKum,
+                ];
+
+                $current->modify('+1 day');
             }
+
+            // Realisasi aktual = total kumulatif dari Lapor Aktivitas (pantau_progress)
+            $realisasiAktual = (int)($db->table('pantau_progress')
+                ->selectMax('jumlah_realisasi_kumulatif', 'max_kum')
+                ->where('id_pcl', $idPCL)
+                ->get()->getRowArray()['max_kum'] ?? 0);
 
             return $this->response->setJSON([
-                'success'         => true,
-                'kurvaTarget'     => $kurvaTarget,
-                'kurvaRealisasi'  => $kurvaRealisasi,
-                'target'          => $pcl['target'],
+                'success'          => true,
+                'kurvaTarget'      => $kurvaTarget,
+                'kurvaRealisasi'   => $kurvaRealisasi,
+                'target'           => $pcl['target'],
+                'realisasi_aktual' => $realisasiAktual,
             ]);
         } elseif ($idPML) {
             $pml = $db->table('pml p')
@@ -407,63 +450,6 @@ class PantauProgressController extends BaseController
             }
 
             $totalTarget = (int)$pml['target'];
-            $startDate = new \DateTime($pml['tanggal_mulai']);
-            $endDate = new \DateTime($pml['tanggal_selesai']);
-            
-            $diff = $startDate->diff($endDate)->days;
-            if ($diff < 0) $diff = 0;
-            if ($diff > 365) $diff = 365;
-
-            $dates = [];
-            $workDaysCount = 0;
-            for ($i = 0; $i <= $diff; $i++) {
-                $currentDate = clone $startDate;
-                $currentDate->modify("+$i days");
-                $tglStr = $currentDate->format('Y-m-d');
-                $dayOfWeek = (int)$currentDate->format('w');
-                $isWorkDay = ($dayOfWeek !== 0 && $dayOfWeek !== 6) ? 1 : 0;
-                
-                $dates[$tglStr] = [
-                    'tanggal_target' => $tglStr,
-                    'is_hari_kerja' => $isWorkDay,
-                    'target_harian_absolut' => 0,
-                    'target_kumulatif_absolut' => 0,
-                    'target_persen_kumulatif' => 0.0,
-                ];
-                if ($isWorkDay) {
-                    $workDaysCount++;
-                }
-            }
-            if ($workDaysCount === 0) {
-                $workDaysCount = count($dates);
-                foreach ($dates as &$d) {
-                    $d['is_hari_kerja'] = 1;
-                }
-            }
-
-            $baseTargetPerDay = floor($totalTarget / $workDaysCount);
-            $remainder = $totalTarget % $workDaysCount;
-
-            $currentKumulatif = 0;
-            $originalTarget = [];
-            foreach ($dates as $tgl => $d) {
-                $dTarget = 0;
-                if ($d['is_hari_kerja']) {
-                    $dTarget = $baseTargetPerDay;
-                    if ($remainder > 0) {
-                        $dTarget += 1;
-                        $remainder--;
-                    }
-                }
-                $currentKumulatif += $dTarget;
-                
-                $originalTarget[] = [
-                    'tanggal_target' => $tgl,
-                    'target_kumulatif_absolut' => $currentKumulatif,
-                    'target_persen_kumulatif' => $totalTarget > 0 ? round(($currentKumulatif / $totalTarget) * 100, 2) : 0.0,
-                ];
-            }
-
             $realisasi = $db->table('pantau_progress')
                 ->select('DATE(created_at) as tanggal, MAX(jumlah_realisasi_kumulatif) as kumulatif')
                 ->where('id_pml', $idPML)
@@ -471,52 +457,106 @@ class PantauProgressController extends BaseController
                 ->orderBy('DATE(created_at)', 'ASC')
                 ->get()->getResultArray();
 
-            $unifiedDates = [];
-            foreach ($originalTarget as $ot) {
-                $unifiedDates[$ot['tanggal_target']] = [
-                    'tanggal_target' => $ot['tanggal_target'],
-                    'target_kumulatif_absolut' => (int)$ot['target_kumulatif_absolut'],
-                    'target_persen_kumulatif' => (float)$ot['target_persen_kumulatif'],
-                ];
+            $realisasiByDate = [];
+            foreach ($realisasi as $r) {
+                $realisasiByDate[$r['tanggal']] = (int)$r['kumulatif'];
             }
 
-            foreach ($realisasi as $r) {
-                $tgl = $r['tanggal'];
-                if (!isset($unifiedDates[$tgl])) {
-                    $unifiedDates[$tgl] = [
-                        'tanggal_target' => $tgl,
-                        'target_kumulatif_absolut' => $totalTarget,
-                        'target_persen_kumulatif' => 100.0,
-                    ];
+            // Date range logic
+            $startDt  = new \DateTime($pml['tanggal_mulai']);
+            $endStr   = $pml['tanggal_selesai'];
+            $today    = date('Y-m-d');
+
+            // Count work days from start to tanggal_selesai for target distribution
+            $diff = $startDt->diff($endDt)->days;
+            if ($diff < 0) $diff = 0;
+            if ($diff > 365) $diff = 365;
+
+            $workDaysCount = 0;
+            for ($i = 0; $i <= $diff; $i++) {
+                $d = clone $startDt;
+                $d->modify("+$i days");
+                $dow = (int)$d->format('w');
+                if ($dow !== 0 && $dow !== 6) $workDaysCount++;
+            }
+            if ($workDaysCount === 0) $workDaysCount = $diff + 1;
+
+            $basePerDay = $totalTarget > 0 ? floor($totalTarget / $workDaysCount) : 0;
+            $remainder  = $totalTarget > 0 ? ($totalTarget % $workDaysCount) : 0;
+
+            // Build daily target lookup
+            $targetByDate = [];
+            $runningT = 0;
+            for ($i = 0; $i <= $diff; $i++) {
+                $d = clone $startDt;
+                $d->modify("+$i days");
+                $tgl = $d->format('Y-m-d');
+                $dow = (int)$d->format('w');
+                $isWork = ($dow !== 0 && $dow !== 6);
+                $dayTarget = 0;
+                if ($isWork) {
+                    $dayTarget = $basePerDay;
+                    if ($remainder > 0) { $dayTarget++; $remainder--; }
                 }
+                $runningT += $dayTarget;
+                $targetByDate[$tgl] = $runningT;
             }
 
-            ksort($unifiedDates);
-            $kurvaTarget = array_values($unifiedDates);
-
-            $realisasiMap = [];
-            foreach ($realisasi as $r) {
-                $realisasiMap[$r['tanggal']] = (int)$r['kumulatif'];
+            $lastRealisasiDate = !empty($realisasi) ? end($realisasi)['tanggal'] : $pml['tanggal_mulai'];
+            if ($today <= $endStr) {
+                $chartEndVal = $endStr;
+            } else {
+                $chartEndVal = max($endStr, $lastRealisasiDate);
             }
+            $chartEnd = new \DateTime($chartEndVal);
 
+            // Generate full daily timeline
+            $kurvaTarget    = [];
             $kurvaRealisasi = [];
-            $runningKum = 0;
-            foreach ($kurvaTarget as $kt) {
-                $tgl = $kt['tanggal_target'];
-                if (isset($realisasiMap[$tgl])) {
-                    $runningKum = $realisasiMap[$tgl];
+            $runningTargetKum    = 0;
+            $runningRealisasiKum = 0;
+            $current = clone $startDt;
+
+            while ($current <= $chartEnd) {
+                $tgl = $current->format('Y-m-d');
+
+                if (isset($targetByDate[$tgl])) {
+                    $runningTargetKum = $targetByDate[$tgl];
+                } elseif ($tgl > array_key_last($targetByDate)) {
+                    $runningTargetKum = $totalTarget; // capped at max after end date
                 }
-                $kurvaRealisasi[] = [
-                    'tanggal' => $tgl,
-                    'kumulatif' => $runningKum,
+
+                if (isset($realisasiByDate[$tgl])) {
+                    $runningRealisasiKum = $realisasiByDate[$tgl];
+                }
+
+                $kurvaTarget[] = [
+                    'tanggal_target'           => $tgl,
+                    'target_kumulatif_absolut' => $runningTargetKum,
+                    'target_persen_kumulatif'  => $totalTarget > 0
+                        ? round(($runningTargetKum / $totalTarget) * 100, 2)
+                        : 0.0,
                 ];
+                $kurvaRealisasi[] = [
+                    'tanggal'   => $tgl,
+                    'kumulatif' => $runningRealisasiKum,
+                ];
+
+                $current->modify('+1 day');
             }
+
+            // Realisasi aktual = total kumulatif dari Lapor Aktivitas (pantau_progress)
+            $realisasiAktualPml = (int)($db->table('pantau_progress')
+                ->selectMax('jumlah_realisasi_kumulatif', 'max_kum')
+                ->where('id_pml', $idPML)
+                ->get()->getRowArray()['max_kum'] ?? 0);
 
             return $this->response->setJSON([
-                'success'         => true,
-                'kurvaTarget'     => $kurvaTarget,
-                'kurvaRealisasi'  => $kurvaRealisasi,
-                'target'          => $pml['target'],
+                'success'          => true,
+                'kurvaTarget'      => $kurvaTarget,
+                'kurvaRealisasi'   => $kurvaRealisasi,
+                'target'           => $pml['target'],
+                'realisasi_aktual' => $realisasiAktualPml,
             ]);
         }
         return $this->response->setJSON(['success' => false, 'error' => 'No activity selected']);
