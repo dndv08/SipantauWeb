@@ -22,6 +22,8 @@ class SipantauTransaksiModel extends Model
         'longitude',
         'id_kecamatan',
         'id_desa',
+        'id_sls',
+        'id_subsls',
         'imagepath',
         'created_at'
     ];

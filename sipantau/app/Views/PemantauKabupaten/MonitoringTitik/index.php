@@ -114,6 +114,9 @@
     <p class="text-sm text-gray-500 mt-1 max-w-xs mx-auto">Silakan pilih kegiatan dan petugas terlebih dahulu untuk menampilkan monitoring titik lokasi.</p>
 </div>
 
+<!-- Toast Notification Container -->
+<div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2" style="pointer-events: none;"></div>
+
 <!-- Leaflet CSS & JS -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -125,6 +128,14 @@
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slideIn {
+        animation: slideIn 0.3s ease-out forwards;
+        transition: opacity 0.3s, transform 0.3s;
+    }
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
     }
     .leaflet-popup-content-wrapper {
         border-radius: 8px;
@@ -181,7 +192,7 @@
                     });
                     selectPetugas.disabled = false;
                 } else if (result.success && result.data.length === 0) {
-                    alert('Tidak ada petugas yang ditugaskan pada kegiatan ini di kabupaten Anda.');
+                    showToast('Tidak ada petugas yang ditugaskan pada kegiatan ini di kabupaten Anda.', 'warning');
                 }
             } catch (error) {
                 console.error('Error fetching petugas:', error);
@@ -208,7 +219,7 @@
             const totalTitik = parseInt(document.getElementById('display_total_titik').textContent || '0');
 
             if (totalTitik === 0) {
-                alert('Tidak ada data dokumentasi untuk diunduh (jumlah titik = 0).');
+                showToast('Tidak ada data dokumentasi untuk diunduh (jumlah titik = 0).', 'warning');
                 return;
             }
 
@@ -225,12 +236,12 @@
                 if (result.success) {
                     showDetail(result.info, result.points);
                 } else {
-                    alert(result.message);
+                    showToast(result.message || 'Gagal memuat data.', 'error');
                     hideDetail();
                 }
             } catch (error) {
                 console.error('Error loading monitoring data:', error);
-                alert('Terjadi kesalahan saat memuat data.');
+                showToast('Terjadi kesalahan saat memuat data.', 'error');
             }
         }
 
@@ -321,6 +332,30 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+
+        // Toast notification helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const icons = { info: 'fa-info-circle', warning: 'fa-exclamation-triangle', error: 'fa-times-circle', success: 'fa-check-circle' };
+            const colors = {
+                info: 'bg-blue-50 border-blue-400 text-blue-800',
+                warning: 'bg-yellow-50 border-yellow-400 text-yellow-800',
+                error: 'bg-red-50 border-red-400 text-red-800',
+                success: 'bg-green-50 border-green-400 text-green-800'
+            };
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg ${colors[type] || colors.info} animate-slideIn`;
+            toast.style.pointerEvents = 'auto';
+            toast.innerHTML = `
+                <i class="fas ${icons[type] || icons.info} text-lg"></i>
+                <span class="text-sm font-medium flex-1">${message}</span>
+                <button onclick="this.parentElement.remove()" class="ml-2 opacity-60 hover:opacity-100 transition-opacity">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateX(100%)'; setTimeout(() => toast.remove(), 300); }, 4000);
         }
     });
 </script>

@@ -9,12 +9,34 @@
 <!-- Pilih Kegiatan -->
 <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
     <form method="get" class="flex flex-col sm:flex-row sm:items-center gap-3">
-        <label class="text-sm font-medium text-gray-700">Pilih Kegiatan:</label>
-        <select name="id_pcl" onchange="this.form.submit()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 flex-1 max-w-md">
-            <?php foreach ($kegiatanPCL as $k): ?>
-            <option value="<?= $k['id'] ?>" <?= $k['id'] == $selectedPCL ? 'selected' : '' ?>>
-                <?= esc($k['nama_kegiatan_detail_proses']) ?> (Target: <?= number_format($k['target']) ?>)
-            </option>
+        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">Pilih Kegiatan:</label>
+        <select name="id_pcl" onchange="this.form.submit()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 flex-1 max-w-lg">
+            <?php 
+            // Group kegiatan by nama_kegiatan for optgroup
+            $grouped = [];
+            foreach ($kegiatanPCL as $k) {
+                $groupName = $k['nama_kegiatan'] ?? 'Lainnya';
+                $grouped[$groupName][] = $k;
+            }
+            foreach ($grouped as $groupName => $items): ?>
+            <optgroup label="<?= esc($groupName) ?>">
+                <?php foreach ($items as $k): 
+                    $labelParts = [];
+                    $labelParts[] = $k['nama_kegiatan_detail_proses'];
+                    if (!empty($k['nama_kegiatan_detail']) && $k['nama_kegiatan_detail'] !== $k['nama_kegiatan_detail_proses']) {
+                        $labelParts[] = '(' . $k['nama_kegiatan_detail'] . ')';
+                    }
+                    $labelParts[] = '• Target: ' . number_format($k['target']);
+                    if (!empty($k['tanggal_mulai']) && !empty($k['tanggal_selesai'])) {
+                        $labelParts[] = '• ' . date('d/m/Y', strtotime($k['tanggal_mulai'])) . ' - ' . date('d/m/Y', strtotime($k['tanggal_selesai']));
+                    }
+                    $label = implode(' ', $labelParts);
+                ?>
+                <option value="<?= $k['id'] ?>" <?= $k['id'] == $selectedPCL ? 'selected' : '' ?>>
+                    <?= esc($label) ?>
+                </option>
+                <?php endforeach; ?>
+            </optgroup>
             <?php endforeach; ?>
         </select>
     </form>

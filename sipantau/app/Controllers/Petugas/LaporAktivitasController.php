@@ -15,7 +15,7 @@ class LaporAktivitasController extends BaseController
 
         // Daftar PCL aktif user ini
         $pclList = $db->table('pcl p')
-            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_selesai,
+            ->select('p.id_pcl, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pcl = p.id_pcl) as realisasi_kumulatif')
             ->join('pml', 'p.id_pml = pml.id_pml')
             ->join('kegiatan_wilayah kw', 'pml.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
@@ -28,7 +28,7 @@ class LaporAktivitasController extends BaseController
 
         // Daftar PML aktif user ini
         $pmlList = $db->table('pml p')
-            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mk.nama_kegiatan, mkdp.tanggal_selesai,
+            ->select('p.id_pml, p.target, mkdp.nama_kegiatan_detail_proses, mkd.nama_kegiatan_detail, mk.nama_kegiatan, mkdp.tanggal_mulai, mkdp.tanggal_selesai,
                      (SELECT COALESCE(MAX(pp.jumlah_realisasi_kumulatif),0) FROM pantau_progress pp WHERE pp.id_pml = p.id_pml) as realisasi_kumulatif')
             ->join('kegiatan_wilayah kw', 'p.id_kegiatan_wilayah = kw.id_kegiatan_wilayah')
             ->join('master_kegiatan_detail_proses mkdp', 'kw.id_kegiatan_detail_proses = mkdp.id_kegiatan_detail_proses')
@@ -50,6 +50,8 @@ class LaporAktivitasController extends BaseController
                 'realisasi_kumulatif' => $k['realisasi_kumulatif'],
                 'nama_kegiatan_detail_proses' => '[PCL] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
+                'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
         }
@@ -61,6 +63,8 @@ class LaporAktivitasController extends BaseController
                 'realisasi_kumulatif' => $k['realisasi_kumulatif'],
                 'nama_kegiatan_detail_proses' => '[PML] ' . $k['nama_kegiatan_detail_proses'],
                 'nama_kegiatan' => $k['nama_kegiatan'],
+                'nama_kegiatan_detail' => $k['nama_kegiatan_detail'] ?? '',
+                'tanggal_mulai' => $k['tanggal_mulai'],
                 'tanggal_selesai' => $k['tanggal_selesai'],
             ];
         }
@@ -386,8 +390,46 @@ class LaporAktivitasController extends BaseController
             }
         }
 
+        // Simpan id_pcl/id_pml sebelum hapus untuk recalculate
+        $deletedIdPCL = $progress['id_pcl'];
+        $deletedIdPML = $progress['id_pml'];
+
         $db->table('pantau_progress')->where('id_pantau_progess', $id)->delete();
+
+        // Recalculate kumulatif untuk kegiatan yang sama
+        $this->recalculateKumulatif($db, $deletedIdPCL, $deletedIdPML);
+
         return redirect()->to('/petugas/lapor-aktivitas')->with('success', 'Laporan berhasil dihapus.');
+    }
+
+    /**
+     * Recalculate jumlah_realisasi_kumulatif untuk semua record
+     * setelah insert/delete agar tetap sinkron
+     */
+    private function recalculateKumulatif($db, $idPCL, $idPML)
+    {
+        $builder = $db->table('pantau_progress')
+            ->select('id_pantau_progess, jumlah_realisasi_absolut')
+            ->orderBy('created_at', 'ASC')
+            ->orderBy('id_pantau_progess', 'ASC');
+
+        if ($idPCL) {
+            $builder->where('id_pcl', $idPCL);
+        } elseif ($idPML) {
+            $builder->where('id_pml', $idPML);
+        } else {
+            return;
+        }
+
+        $records = $builder->get()->getResultArray();
+
+        $runningKum = 0;
+        foreach ($records as $rec) {
+            $runningKum += (int) $rec['jumlah_realisasi_absolut'];
+            $db->table('pantau_progress')
+                ->where('id_pantau_progess', $rec['id_pantau_progess'])
+                ->update(['jumlah_realisasi_kumulatif' => $runningKum]);
+        }
     }
 
     // ──────────────── Serve Photo ────────────────
